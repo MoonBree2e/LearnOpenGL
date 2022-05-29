@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenGLInstance", "OpenGLIns
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Triangle", "Triangle\Triangle.vcxproj", "{95B82FD7-AF21-4D62-A247-95C32F3E009D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shader", "Shader\Shader.vcxproj", "{FE9DC19A-51D1-48BB-830C-FDCCD2134613}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{95B82FD7-AF21-4D62-A247-95C32F3E009D}.Release|x64.Build.0 = Release|x64
 		{95B82FD7-AF21-4D62-A247-95C32F3E009D}.Release|x86.ActiveCfg = Release|Win32
 		{95B82FD7-AF21-4D62-A247-95C32F3E009D}.Release|x86.Build.0 = Release|Win32
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Debug|x64.ActiveCfg = Debug|x64
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Debug|x64.Build.0 = Debug|x64
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Debug|x86.ActiveCfg = Debug|Win32
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Debug|x86.Build.0 = Debug|Win32
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Release|x64.ActiveCfg = Release|x64
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Release|x64.Build.0 = Release|x64
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Release|x86.ActiveCfg = Release|Win32
+		{FE9DC19A-51D1-48BB-830C-FDCCD2134613}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
