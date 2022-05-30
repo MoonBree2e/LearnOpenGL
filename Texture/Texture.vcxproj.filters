@@ -34,10 +34,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.fs">
+    <None Include="shader_fs.glsl">
       <Filter>头文件</Filter>
     </None>
-    <None Include="shader.vs">
+    <None Include="shader_vs.glsl">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="shader_fs2.glsl">
       <Filter>头文件</Filter>
     </None>
   </ItemGroup>
