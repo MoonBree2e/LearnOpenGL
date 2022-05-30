@@ -43,5 +43,8 @@
     <None Include="shader_fs2.glsl">
       <Filter>头文件</Filter>
     </None>
+    <None Include="awesomeface_fs.glsl">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

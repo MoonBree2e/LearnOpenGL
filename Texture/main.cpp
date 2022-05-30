@@ -12,6 +12,8 @@ const unsigned int SCR_HEIGHT = 600;
 int Texture();
 int TextureUnit();
 
+float mixCofficient = 0.2;
+
 int main()
 {
     return TextureUnit();
@@ -137,6 +139,9 @@ int TextureUnit()
     unsigned int texture1;
     glGenTextures(1, &texture1);
     glBindTexture(GL_TEXTURE_2D, texture1);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width1, height1, 0, GL_RGB, GL_UNSIGNED_BYTE, data1);
     glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -147,20 +152,37 @@ int TextureUnit()
     glGenTextures(1, &texture2);
     std::cout << nrChannels2 << std::endl;
     glBindTexture(GL_TEXTURE_2D, texture2);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width2, height2, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
     glGenerateMipmap(GL_TEXTURE_2D);
 
 
 
-    Shader shadeProgram("shader_vs.glsl", "shader_fs2.glsl");
+    //Shader shadeProgram("shader_vs.glsl", "shader_fs2.glsl");
+    Shader shadeProgram("shader_vs.glsl", "awesomeface_fs.glsl"); // hw1
 
-    float vertices[] = {
+        float vertices[] = {
         //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
              0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // 右上
              0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // 右下
             -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
             -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // 左上
     };
+    //float vertices[] = {
+    //    //     ---- 位置 ----       ---- 颜色 ----     - 纹理坐标 -
+    //         0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   2.0f, 2.0f,   // 右上
+    //         0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   2.0f, 0.0f,   // 右下
+    //        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // 左下
+    //        -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 2.0f    // 左上
+    //};
+    //float vertices[] = {
+    //     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   0.55f, 0.55f, // top right
+    //     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   0.55f, 0.45f, // bottom right
+    //    -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.45f, 0.45f, // bottom left
+    //    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.45f, 0.55f  // top left 
+    //};
 
     unsigned int indices[] = { // 注意索引从0开始! 
     0, 1, 3, // 第一个三角形
@@ -197,7 +219,7 @@ int TextureUnit()
     glUniform1i(glGetUniformLocation(shadeProgram.ID, "texture1"), 0);
     //glUniform1i(glGetUniformLocation(shadeProgram.ID, "texture2"), 1);
     shadeProgram.setInt("texture2", 1); // 或者使用着色器类设置
-
+    glUniform1f(glGetUniformLocation(shadeProgram.ID, "mixCofficient"), mixCofficient);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -208,6 +230,7 @@ int TextureUnit()
         glClear(GL_COLOR_BUFFER_BIT);
 
         shadeProgram.use();
+        glUniform1f(glGetUniformLocation(shadeProgram.ID, "mixCofficient"), mixCofficient);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
@@ -235,5 +258,17 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+        if (mixCofficient < 1.0f)
+            mixCofficient += 0.01f;
+        else mixCofficient = 1.0f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+        if (mixCofficient > 0)
+            mixCofficient -= 0.01f;
+        else mixCofficient = 0;
     }
 }

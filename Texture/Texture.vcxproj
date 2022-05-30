@@ -152,6 +152,7 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="awesomeface_fs.glsl" />
     <None Include="shader_fs.glsl" />
     <None Include="shader_fs2.glsl" />
     <None Include="shader_vs.glsl" />
