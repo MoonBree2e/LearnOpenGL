@@ -11,5 +11,5 @@ void main()
 {
     vec2 NewCoord = vec2(1 - TexCoord.x, TexCoord.y);
     FragColor = mix(texture(texture1, TexCoord), texture(texture2, NewCoord), mixCofficient);
-
 }
+    

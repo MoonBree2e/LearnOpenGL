@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shader", "Shader\Shader.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Texture", "Texture\Texture.vcxproj", "{3F396960-8384-409F-943C-B556618E52A5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Transform", "Transform\Transform.vcxproj", "{B24E7014-B545-4CBD-88E8-479162CCB68D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +53,14 @@ Global
 		{3F396960-8384-409F-943C-B556618E52A5}.Release|x64.Build.0 = Release|x64
 		{3F396960-8384-409F-943C-B556618E52A5}.Release|x86.ActiveCfg = Release|Win32
 		{3F396960-8384-409F-943C-B556618E52A5}.Release|x86.Build.0 = Release|Win32
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Debug|x64.ActiveCfg = Debug|x64
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Debug|x64.Build.0 = Debug|x64
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Debug|x86.ActiveCfg = Debug|Win32
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Debug|x86.Build.0 = Debug|Win32
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Release|x64.ActiveCfg = Release|x64
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Release|x64.Build.0 = Release|x64
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Release|x86.ActiveCfg = Release|Win32
+		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
