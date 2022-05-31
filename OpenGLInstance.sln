@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Texture", "Texture\Texture.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Transform", "Transform\Transform.vcxproj", "{B24E7014-B545-4CBD-88E8-479162CCB68D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoordinatesSystem", "CoordinatesSystem\CoordinatesSystem.vcxproj", "{432FCFBB-19C2-4989-BFE5-865CFC6D434C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Release|x64.Build.0 = Release|x64
 		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Release|x86.ActiveCfg = Release|Win32
 		{B24E7014-B545-4CBD-88E8-479162CCB68D}.Release|x86.Build.0 = Release|Win32
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Debug|x64.ActiveCfg = Debug|x64
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Debug|x64.Build.0 = Debug|x64
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Debug|x86.ActiveCfg = Debug|Win32
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Debug|x86.Build.0 = Debug|Win32
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Release|x64.ActiveCfg = Release|x64
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Release|x64.Build.0 = Release|x64
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Release|x86.ActiveCfg = Release|Win32
+		{432FCFBB-19C2-4989-BFE5-865CFC6D434C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
