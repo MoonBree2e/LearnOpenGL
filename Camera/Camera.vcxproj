@@ -148,6 +148,7 @@
     <ClCompile Include="main_camera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
