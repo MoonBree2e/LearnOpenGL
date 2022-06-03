@@ -31,11 +31,11 @@ public:
 
     float Yaw;
     float Pitch;
-    
+
     float MovementSpeed;
     float MouseSensitivity;
     float Fov;
-        Camera(glm::vec3 pos = glm::vec3(0.f, 0.f, 0.f), glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float yaw = YAW, float pitch = PITCH) :
+    Camera(glm::vec3 pos = glm::vec3(0.f, 0.f, 0.f), glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float yaw = YAW, float pitch = PITCH) :
         Front(glm::vec3(0.f, 0.f, -1.f)), Position(pos), WorldUp(up),
         Yaw(yaw), Pitch(pitch), MovementSpeed(CAMERASPEED), MouseSensitivity(SENSITIVITY), Fov(FOV)
     {
@@ -48,7 +48,7 @@ public:
         __updateCameraVectors();
     }
 
-    glm::mat4 getViewMatrix(){
+    glm::mat4 getViewMatrix() {
         return glm::lookAt(Position, Position + Front, Up);
     }
 
@@ -69,7 +69,7 @@ public:
         }
     }
 
-    void processMousemoveMent(float vXoffset, float vYoffset, GLboolean constrainPitch = true)
+    void processMouseMovement(float vXoffset, float vYoffset, GLboolean constrainPitch = true)
     {
         vXoffset *= MouseSensitivity;
         vYoffset *= MouseSensitivity;
