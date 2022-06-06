@@ -2,11 +2,26 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <OpenGLBin>D:\OpenGL\bin\</OpenGLBin>
+    <ASSIMP>D:\OpenGLSDK\assimp\</ASSIMP>
+    <OPENGL>D:\OpenGLSDK\OpenGL\</OPENGL>
+    <STB_IMAGE>D:\OpenGLSDK\stb_image\</STB_IMAGE>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <IncludePath>$(OPENGL)include;$(ASSIMP)include;$(STB_IMAGE)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OPENGL)lib;$(ASSIMP)lib\x64\Debug;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <IncludePath>$(OPENGL)include;$(ASSIMP)include;$(STB_IMAGE)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(OPENGL)lib;$(ASSIMP)lib\x64\Release;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+
+
   <PropertyGroup>
-    <IncludePath>D:\OpenGL\includes;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\OpenGL\lib;$(LibraryPath)</LibraryPath>
+
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
   </ItemDefinitionGroup>
@@ -15,7 +30,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
       <AdditionalDependencies>assimp-vc142-mtd.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\OpenGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OPENGL)lib;$(ASSIMP)lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>../imgui;../Utils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -24,15 +39,21 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
       <AdditionalDependencies>assimp-vc142-mt.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>D:\OpenGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OPENGL)lib;$(ASSIMP)lib\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>../imgui;../Utils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <BuildMacro Include="OpenGLBin">
-      <Value>$(OpenGLBin)</Value>
+    <BuildMacro Include="ASSIMP">
+      <Value>$(ASSIMP)</Value>
+    </BuildMacro>
+    <BuildMacro Include="OPENGL">
+      <Value>$(OPENGL)</Value>
+    </BuildMacro>
+    <BuildMacro Include="STB_IMAGE">
+      <Value>$(STB_IMAGE)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>

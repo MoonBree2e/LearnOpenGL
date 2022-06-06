@@ -3,7 +3,7 @@
 #include <assimp/postprocess.h>     // Post processing flags
 #include <iostream>
 
-#pragma comment (lib, "assimp-vc142-mt.lib")
+//#pragma comment (lib, "assimp-vc142-mtd.lib")
 
 void LoadFinish(const aiScene* scene)
 {
