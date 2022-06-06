@@ -18,11 +18,11 @@
     <IncludePath>$(OPENGL)include;$(ASSIMP)include;$(STB_IMAGE)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL)lib;$(ASSIMP)lib\x64\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-
-
-  <PropertyGroup>
-
-  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>../imgui;../Utils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -32,18 +32,12 @@
       <AdditionalDependencies>assimp-vc142-mtd.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OPENGL)lib;$(ASSIMP)lib\x64\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <ClCompile>
-      <AdditionalIncludeDirectories>../imgui;../Utils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
       <AdditionalDependencies>assimp-vc142-mt.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OPENGL)lib;$(ASSIMP)lib\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <ClCompile>
-      <AdditionalIncludeDirectories>../imgui;../Utils;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="ASSIMP">
