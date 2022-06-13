@@ -148,7 +148,18 @@
     <ClCompile Include="main_geometryshader.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="line.frag" />
     <None Include="line.geom" />
+    <None Include="line.vert" />
+    <None Include="nanosuit.frag" />
+    <None Include="nanosuit.geom" />
+    <None Include="nanosuit.vert" />
+    <None Include="normal.frag" />
+    <None Include="normal.geom" />
+    <None Include="normal.vert" />
+    <None Include="triangle.frag" />
+    <None Include="triangle.geom" />
+    <None Include="triangle.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

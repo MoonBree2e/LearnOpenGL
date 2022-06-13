@@ -29,5 +29,38 @@
     <None Include="line.geom">
       <Filter>头文件</Filter>
     </None>
+    <None Include="line.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="line.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="triangle.geom">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="triangle.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="triangle.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="nanosuit.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="nanosuit.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="nanosuit.geom">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="normal.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="normal.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="normal.geom">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
