@@ -53,6 +53,10 @@ public:
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
     }
+    unsigned int getVAO()
+    {
+        return VAO;
+    }
 private:
     /*  äÖÈ¾Êý¾Ý  */
     unsigned int VAO, VBO, EBO;

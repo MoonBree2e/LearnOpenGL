@@ -24,12 +24,12 @@ public:
             meshes[i].Draw(shader);
         }
     }
-private:
     /*  模型数据  */
     vector<Mesh> meshes;
     string directory;
     vector<Texture> textures_loaded;
 
+private:
     /*  函数   */
     void loadModel(string path)
     {
@@ -128,6 +128,7 @@ private:
                 texture.type = typeName;
                 texture.path = str.C_Str();
                 textures.push_back(texture);
+                textures_loaded.push_back(texture);
             }
         }
         return textures;
