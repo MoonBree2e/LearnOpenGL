@@ -31,3 +31,22 @@ Hello
 
 ## Gamma校正
 
+正常输出：
+
+![image-20220618113110221](README.assets/image-20220618113110221.png)
+
+gamma矫正后：
+
+![image-20220618113223632](README.assets/image-20220618113223632.png)
+
+
+
+gamma矫正方式：
+
+```
+    float gamma = 2.2;
+    FragColor.rgb = pow(FragColor.rgb, vec3(1.0/gamma));
+    or
+    glEnable(GL_FRAMEBUFFER_SRGB);
+```
+
