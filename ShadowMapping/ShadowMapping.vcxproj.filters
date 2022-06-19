@@ -25,4 +25,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ShadowMappingDepth.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="ShadowMappingDepth.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="DebugQuadDepth.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="DebugQuadDepth.frag">
+      <Filter>头文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

@@ -147,6 +147,12 @@
     <ClCompile Include="..\Utils\stb_image.cpp" />
     <ClCompile Include="main_shadowmapping.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="DebugQuadDepth.frag" />
+    <None Include="DebugQuadDepth.vert" />
+    <None Include="ShadowMappingDepth.frag" />
+    <None Include="ShadowMappingDepth.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
