@@ -3,8 +3,6 @@ layout(location=0) in vec3 _Position;
 layout(location=1) in vec3 _Normal;
 layout(location=2) in vec2 _TexCoord;
 
-out vec2 TexCoords;
-
 out VS_OUT{
     vec3 FragPos;
     vec3 Normal;
