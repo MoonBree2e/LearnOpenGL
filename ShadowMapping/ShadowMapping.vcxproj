@@ -150,6 +150,8 @@
   <ItemGroup>
     <None Include="DebugQuadDepth.frag" />
     <None Include="DebugQuadDepth.vert" />
+    <None Include="ShadowMapping.frag" />
+    <None Include="ShadowMapping.vert" />
     <None Include="ShadowMappingDepth.frag" />
     <None Include="ShadowMappingDepth.vert" />
   </ItemGroup>

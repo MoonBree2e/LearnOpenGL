@@ -38,5 +38,11 @@
     <None Include="DebugQuadDepth.frag">
       <Filter>头文件</Filter>
     </None>
+    <None Include="ShadowMapping.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="ShadowMapping.frag">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
