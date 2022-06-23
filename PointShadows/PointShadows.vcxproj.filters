@@ -25,4 +25,21 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="PointShadowsDepth.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="PointShadowsDepth.geom">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="PointShadowsDepth.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="PointShadows.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="PointShadows.vert">
+      <Filter>头文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

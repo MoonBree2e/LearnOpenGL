@@ -92,6 +92,16 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    Shader shader("PointShadows.vert", "PointShadows.frag");
+    Shader simpleDepthShader("PointShadowsDepth.vert", "PointShadowsDepth.frag", "PointShadowsDepth.geom");
+
+    shader.use();
+    shader.setInt("diffuseTexture", 0);
+    shader.setInt("depthMap", 1);
+
+    glm::vec3 lightPos(0.0f, 0.0f, 0.0f);
+
+    GLuint woodTexture = loadTexture("../Assets/wood.png");
 
     GLuint DepthCubeMap;
     glGenTextures(1, &DepthCubeMap);
@@ -109,85 +119,13 @@ int main()
     GLuint DepthMapFBO;
     glGenFramebuffers(1, &DepthMapFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, DepthMapFBO);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, DepthCubeMap, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    GLuint planeVBO;
-    glGenVertexArrays(1, &planeVAO);
-    glGenBuffers(1, &planeVBO);
-    glBindVertexArray(planeVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glBindVertexArray(0);
-
-    // load textures
-    // -------------
-    GLuint woodTexture = loadTexture("../Assets/wood.png");
-
-    // build and compile shaders
-    // -------------------------
-    //Shader shader("depth.vert", "depth.frag");
-    Shader SimpleDepthShader("ShadowMappingDepth.vert", "ShadowMappingDepth.frag");
-    Shader DebugDepthQuad("DebugQuadDepth.vert", "DebugQuadDepth.frag");
-    Shader ShadowMappingShader("ShadowMapping.vert", "ShadowMapping.frag");
-
-    GLuint DepthMapFBO;
-    glGenFramebuffers(1, &DepthMapFBO);
-    GLuint DepthMap;
-    glGenTextures(1, &DepthMap);
-    glBindTexture(GL_TEXTURE_2D, DepthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, DepthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, DepthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-    // shader configuration
-    // --------------------
-    DebugDepthQuad.use();
-    DebugDepthQuad.setInt("depthMap", 0);
-
-    ShadowMappingShader.use();
-    ShadowMappingShader.setInt("diffuseTexture", 0);
-    ShadowMappingShader.setInt("shadowMap", 1);
-
-    // lighting info
-    // -------------
-    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
 
     // render loop
     // -----------
@@ -208,49 +146,55 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        GLfloat aspect = (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT;
+        GLfloat near = 1.f, far = 25.f;
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.f), aspect, near, far);
+        std:vector<glm::mat4> shadowTransforms;
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1, 0, 0), glm::vec3(0, -1, 0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, -1, 0), glm::vec3(0, 0, 1)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 0, 1), glm::vec3(0, -1, 0)));
+        shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 0, -1), glm::vec3(0, -1, 0)));
+
         glm::mat4 lightProjection(1.0), lightView(1.0), lightSpaceMatrix(1.0);
         float near_plane = 1.0f, far_plane = 7.5f;
         lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
         lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
 
-        SimpleDepthShader.use();
-        SimpleDepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        // render scene to depth cubemap
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, DepthMapFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, woodTexture);
-        renderScene(SimpleDepthShader);
+        simpleDepthShader.use();
+        for (GLuint i = 0; i < 6; ++i)
+        {
+            simpleDepthShader.setMat4(("shadowMatrices[" + std::to_string(i) + "]").c_str(), shadowTransforms[i]);
+        }
+        simpleDepthShader.setFloat("far_plane", far);
+        simpleDepthShader.setVec3("lightPos", lightPos);
+        renderScene(simpleDepthShader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        ShadowMappingShader.use();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        shader.use();
+        glm::mat4 projection = glm::perspective(camera.Fov, (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.getViewMatrix();
-        ShadowMappingShader.setMat4("projection", projection);
-        ShadowMappingShader.setMat4("view", view);
-        // set light uniforms
-        ShadowMappingShader.setVec3("viewPos", camera.Position);
-        ShadowMappingShader.setVec3("lightPos", lightPos);
-        ShadowMappingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shader.setMat4("projection", projection);
+        shader.setMat4("view", view);
+
+        shader.setVec3("lightPos", lightPos);
+        shader.setVec3("viewPos", camera.Position);
+
+        //shader.setInt("shadows",)
+        shader.setFloat("far_plane", far);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, DepthMap);
-        renderScene(ShadowMappingShader);
-
-        DebugDepthQuad.use();
-        DebugDepthQuad.setFloat("near_plane", near_plane);
-        DebugDepthQuad.setFloat("far_plane", far_plane);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, DepthMap);
-        //renderQuad();
-
-
+        glBindTexture(GL_TEXTURE_CUBE_MAP, DepthCubeMap);
+        renderScene(shader);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

@@ -147,6 +147,13 @@
     <ClCompile Include="..\Utils\stb_image.cpp" />
     <ClCompile Include="main_pointshadows.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="PointShadows.frag" />
+    <None Include="PointShadows.vert" />
+    <None Include="PointShadowsDepth.frag" />
+    <None Include="PointShadowsDepth.geom" />
+    <None Include="PointShadowsDepth.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
