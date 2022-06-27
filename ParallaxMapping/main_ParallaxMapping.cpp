@@ -90,8 +90,8 @@ int main()
     Shader shader("ParallaxMapping.vert", "ParallaxMapping.frag");
 
     GLuint diffuseMap = loadTexture("../Assets/bricks2.jpg");
-    GLuint normalMap = loadTexture("../Assets/bricks2_normal.jpg");
-    GLuint heightMap = loadTexture("../Assets/bricks2_disp.jpg");
+    GLuint normalMap  = loadTexture("../Assets/bricks2_normal.jpg");
+    GLuint heightMap  = loadTexture("../Assets/bricks2_disp.jpg");
 
     shader.use();
     shader.setInt("diffuseMap", 0);
@@ -128,6 +128,7 @@ int main()
         shader.setMat4("projection", projection);
         shader.setMat4("model", model);
         shader.setVec3("lightPos", lightPos);
+        shader.setVec3("viewPos", camera.Position);
         shader.setFloat("height_scale", height_scale);
         shader.setBool("parallax", parallax_mapping);
         glActiveTexture(GL_TEXTURE0);
@@ -182,6 +183,7 @@ void processInput(GLFWwindow* window)
     {
         parallax_mapping = !parallax_mapping;
         parallaxKeyPressed = true;
+        printf("%d\n", parallax_mapping);         
     }
     if (glfwGetKey(window, GLFW_KEY_U) == GLFW_RELEASE)
     {

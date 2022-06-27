@@ -21,15 +21,19 @@ vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
 {
     float height =  texture(depthMap, texCoords).r;    
     vec2 p = viewDir.xy / viewDir.z * (height * height_scale);
-    return texCoords - p;    }
+    return texCoords - p;    
+}
 
 void main()
 {
     vec3 viewDir = normalize(fs_in.TangentViewPos - fs_in.TangentFragPos);
-    vec2 texCoords = ParallaxMapping(fs_in.TexCoords, viewDir);
+    vec2 texCoords = fs_in.TexCoords;
 
-        if(parallax)
+    if(parallax)
         texCoords = ParallaxMapping(fs_in.TexCoords,  viewDir);
+
+    if(texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+        discard;
         
     // Obtain normal from normal map
     vec3 normal = texture(normalMap, texCoords).rgb;
