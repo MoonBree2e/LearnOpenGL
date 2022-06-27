@@ -25,4 +25,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ParallaxMapping.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="ParallaxMapping.frag">
+      <Filter>头文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>
