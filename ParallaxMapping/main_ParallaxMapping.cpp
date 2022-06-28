@@ -89,9 +89,13 @@ int main()
 
     Shader shader("ParallaxMapping.vert", "ParallaxMapping.frag");
 
-    GLuint diffuseMap = loadTexture("../Assets/bricks2.jpg");
-    GLuint normalMap  = loadTexture("../Assets/bricks2_normal.jpg");
-    GLuint heightMap  = loadTexture("../Assets/bricks2_disp.jpg");
+    //GLuint diffuseMap = loadTexture("../Assets/bricks2.jpg");
+    //GLuint normalMap  = loadTexture("../Assets/bricks2_normal.jpg");
+    //GLuint heightMap  = loadTexture("../Assets/bricks2_disp.jpg");
+
+    GLuint diffuseMap = loadTexture("../Assets/toy_box_diffuse.png");
+    GLuint normalMap = loadTexture("../Assets/toy_box_normal.png");
+    GLuint heightMap = loadTexture("../Assets/toy_box_disp.png");
 
     shader.use();
     shader.setInt("diffuseMap", 0);
