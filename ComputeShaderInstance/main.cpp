@@ -80,6 +80,7 @@ int main()
 	glTextureParameteri(screenTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri(screenTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTextureStorage2D(screenTex, 1, GL_RGBA32F, SCREEN_WIDTH, SCREEN_HEIGHT);
+	glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
 	std::ifstream vShaderFile, fShaderFile, cShaderFile;
 	std::string vertexCode, fragCode, computeCode;
@@ -162,7 +163,7 @@ int main()
 
 		glUseProgram(screenShaderProgram);
 		glBindTextureUnit(0, screenTex);
-		glUniform1i(glGetUniformLocation(screenShaderProgram, "screen"), 0);
+		glUniform1i(glGetUniformLocation(screenShaderProgram, "screenTexture"), 0);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
