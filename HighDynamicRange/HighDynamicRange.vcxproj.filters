@@ -25,4 +25,18 @@
       <Filter>资源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="lighting.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="lighting.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="hdr.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="hdr.vert">
+      <Filter>头文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

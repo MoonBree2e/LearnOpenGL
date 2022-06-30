@@ -147,6 +147,12 @@
     <ClCompile Include="..\Utils\stb_image.cpp" />
     <ClCompile Include="main_hdr.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="hdr.frag" />
+    <None Include="hdr.vert" />
+    <None Include="lighting.frag" />
+    <None Include="lighting.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
