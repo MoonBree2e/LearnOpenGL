@@ -72,8 +72,8 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    Shader shader("lighting.vs", "lighting.frag");
-    Shader hdrShader("hdr.vs", "hdr.frag");
+    Shader shader("lighting.vert", "lighting.frag");
+    Shader hdrShader("hdr.vert", "hdr.frag");
 
     
     std::vector<glm::vec3> lightPositions;
