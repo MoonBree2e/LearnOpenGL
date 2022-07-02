@@ -39,3 +39,11 @@ void main()
     }
     FragColor = vec4(ambient + lighting, 1.0);
 }
+
+/*
+4(byte) * 8 * 36 = 1152
+72 * 4 = 288
+288 * 4 = 1152
+
+2 16 = 1byte
+*/
