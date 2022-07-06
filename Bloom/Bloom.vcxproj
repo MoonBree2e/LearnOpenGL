@@ -154,7 +154,7 @@
     <None Include="bloom_final.vert" />
     <None Include="blur.frag" />
     <None Include="blur.vert" />
-    <None Include="lightbox.frag" />
+    <None Include="light_box.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

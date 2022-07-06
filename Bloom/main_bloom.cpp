@@ -35,8 +35,8 @@ float lastFrame = 0.0f;
 // Global variables
 GLuint woodTexture;
 
-void RenderCube();
-void RenderQuad();
+void renderCube();
+void renderQuad();
 
 int main()
 {
@@ -176,7 +176,7 @@ int main()
         model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
         shader.setMat4("model", model);
         shader.setBool("inverse_normals", false);
-        RenderCube();
+        renderCube();
 
         glBindTexture(GL_TEXTURE_2D, containerTexture);
         model = glm::mat4(1.0f);
@@ -393,9 +393,8 @@ unsigned int loadTexture(char const* path, bool gammaCorrection)
     return textureID;
 }
 
-
-// RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
-// and post-processing effects.
+// renderCube() renders a 1x1 3D cube in NDC.
+// -------------------------------------------------
 unsigned int cubeVAO = 0;
 unsigned int cubeVBO = 0;
 void renderCube()
@@ -469,6 +468,8 @@ void renderCube()
     glBindVertexArray(0);
 }
 
+// renderQuad() renders a 1x1 XY quad in NDC
+// -----------------------------------------
 unsigned int quadVAO = 0;
 unsigned int quadVBO;
 void renderQuad()
