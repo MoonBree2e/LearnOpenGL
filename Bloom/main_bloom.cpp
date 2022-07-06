@@ -71,6 +71,8 @@ int main()
 
     unsigned int woodTexture = loadTexture("../Assets/wood.png", true);
     unsigned int containerTexture = loadTexture("../Assets/container2.png", true);  
+    glObjectLabel(GL_TEXTURE, woodTexture, -1, "woodTexture");
+    glObjectLabel(GL_TEXTURE, containerTexture, -1, "containerTexture");
 
     unsigned int hdrFBO;
     glGenFramebuffers(1, &hdrFBO);
@@ -163,6 +165,8 @@ int main()
         shader.setMat4("view", view);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
+
+
         for (GLuint i = 0; i < lightPositions.size(); ++i)
         {
             shader.setVec3(("lights[" + std::to_string(i) + "].Position").c_str(), lightPositions[i]);
