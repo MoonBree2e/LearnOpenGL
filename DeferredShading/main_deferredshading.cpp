@@ -8,6 +8,7 @@
 
 #include "camera.h"
 #include "shader.h"
+#include "model.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -58,6 +59,8 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
+
+    Model backpack("../Assets/backpack/backpack.obj");
 
     GLuint gBuffer;
     glGenFramebuffers(1, &gBuffer); glObjectLabel(GL_FRAMEBUFFER, gBuffer, -1, "gBuffer");

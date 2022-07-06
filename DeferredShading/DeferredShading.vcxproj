@@ -147,6 +147,10 @@
     <ClCompile Include="..\Utils\stb_image.cpp" />
     <ClCompile Include="main_deferredshading.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="g_buffer.frag" />
+    <None Include="g_buffer.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
