@@ -32,5 +32,11 @@
     <None Include="g_buffer.frag">
       <Filter>头文件</Filter>
     </None>
+    <None Include="deferred_shading.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="deferred_shading.frag">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

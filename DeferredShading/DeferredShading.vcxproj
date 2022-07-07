@@ -148,6 +148,8 @@
     <ClCompile Include="main_deferredshading.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="deferred_shading.frag" />
+    <None Include="deferred_shading.vert" />
     <None Include="g_buffer.frag" />
     <None Include="g_buffer.vert" />
   </ItemGroup>

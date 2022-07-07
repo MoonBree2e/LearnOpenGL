@@ -60,7 +60,30 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
+    Shader shaderGeometryPass("g_buffer.vert", "g_buffer.frag");                    glObjectLabel(GL_PROGRAM, shaderGeometryPass.ID, -1, "shaderGeometryPass");
+    Shader shaderLightingPass("deferred_shading.vert", "deferred_shading.frag");    glObjectLabel(GL_PROGRAM, shaderLightingPass.ID, -1, "shaderLightingPass");
+    //Shader shaderLightBox("deferred_light_box.vert", "deferred_light_box.frag");    glObjectLabel(GL_PROGRAM, shaderLightBox.ID,     -1, "shaderLightBox");
+
+    shaderLightingPass.use();
+    shaderLightingPass.setInt("gPosition", 0);
+    shaderLightingPass.setInt("gNormal", 1);
+    shaderLightingPass.setInt("gAlbedoSpec", 2);
+
     Model backpack("../Assets/backpack/backpack.obj");
+    std::vector<glm::vec3> objectPositions;
+    objectPositions.push_back(glm::vec3(-3.0, -0.5, -3.0));
+    objectPositions.push_back(glm::vec3(0.0, -0.5, -3.0));
+    objectPositions.push_back(glm::vec3(3.0, -0.5, -3.0));
+    objectPositions.push_back(glm::vec3(-3.0, -0.5, 0.0));
+    objectPositions.push_back(glm::vec3(0.0, -0.5, 0.0));
+    objectPositions.push_back(glm::vec3(3.0, -0.5, 0.0));
+    objectPositions.push_back(glm::vec3(-3.0, -0.5, 3.0));
+    objectPositions.push_back(glm::vec3(0.0, -0.5, 3.0));
+    objectPositions.push_back(glm::vec3(3.0, -0.5, 3.0));
+    const GLuint NR_LIGHTS = 32;
+    std::vector<glm::vec3> lightPositions;
+    std::vector<glm::vec3> lightColors;
+
 
     GLuint gBuffer;
     glGenFramebuffers(1, &gBuffer); glObjectLabel(GL_FRAMEBUFFER, gBuffer, -1, "gBuffer");
