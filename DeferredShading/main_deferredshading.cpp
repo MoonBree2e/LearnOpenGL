@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
+#include <KHR/khrplatform.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -42,7 +43,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Learn HDR", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Learn Deferred Shading", NULL, NULL);
     glfwMakeContextCurrent(window);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -83,6 +84,20 @@ int main()
     const GLuint NR_LIGHTS = 32;
     std::vector<glm::vec3> lightPositions;
     std::vector<glm::vec3> lightColors;
+    srand(13);
+    for (GLuint i = 0; i < NR_LIGHTS; i++)
+    {
+        // Calculate slightly random offsets
+        GLfloat xPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+        GLfloat yPos = ((rand() % 100) / 100.0) * 6.0 - 4.0;
+        GLfloat zPos = ((rand() % 100) / 100.0) * 6.0 - 3.0;
+        lightPositions.push_back(glm::vec3(xPos, yPos, zPos));
+        // Also calculate random color
+        GLfloat rColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+        GLfloat gColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+        GLfloat bColor = ((rand() % 100) / 200.0f) + 0.5; // Between 0.5 and 1.0
+        lightColors.push_back(glm::vec3(rColor, gColor, bColor));
+    }
 
 
     GLuint gBuffer;
@@ -117,6 +132,16 @@ int main()
     GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     glDrawBuffers(3, attachments);
 
+    GLuint rboDepth;
+    glGenRenderbuffers(1, &rboDepth);   glObjectLabel(GL_DEPTH, rboDepth, -1, "rboDepth");
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Framebuffer not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     while (!glfwWindowShouldClose(window))
     {
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -127,7 +152,47 @@ int main()
         // -----
         processInput(window);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glm::mat4 projection = glm::perspective(camera.Fov, (GLfloat)SCR_WIDTH / (GLfloat)SCR_HEIGHT, 0.1f, 100.f);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 model(1.0f);
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shaderGeometryPass");
+        shaderGeometryPass.use();
+        shaderGeometryPass.setMat4("projection", projection);
+        shaderGeometryPass.setMat4("view", view);
+        for (GLuint i = 0; i < objectPositions.size(); ++i)
+        {
+            model = glm::mat4();
+            model = glm::translate(model, objectPositions[i]);
+            model = glm::scale(model, glm::vec3(0.25f));
+            shaderGeometryPass.setMat4("model", model);
+            backpack.Draw(shaderGeometryPass);
+        }
+        glPopDebugGroup();
 
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        shaderLightingPass.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+        for (GLuint i = 0; i < lightPositions.size(); ++i)
+        {
+            shaderLightingPass.setVec3(("lights[" + std::to_string(i) + "].Position").c_str(), lightPositions[i]);
+            shaderLightingPass.setVec3(("lights[" + std::to_string(i) + "].Color").c_str(), lightColors[i]);
+            const GLfloat constant = 1.0f;
+            const GLfloat linear = 0.7;
+            const GLfloat quadratic = 1.8;
+            shaderLightingPass.setFloat(("lights[" + std::to_string(i) + "].Linear").c_str(), linear);
+            shaderLightingPass.setFloat(("lights[" + std::to_string(i) + "].Quadratic").c_str(), quadratic);
+        }
+        shaderLightingPass.setVec3("viewPos", camera.Position);
+        renderQuad();
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
