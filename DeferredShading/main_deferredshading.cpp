@@ -133,7 +133,7 @@ int main()
     glDrawBuffers(3, attachments);
 
     GLuint rboDepth;
-    glGenRenderbuffers(1, &rboDepth);   glObjectLabel(GL_DEPTH, rboDepth, -1, "rboDepth");
+    glGenRenderbuffers(1, &rboDepth);   glObjectLabel(GL_RENDERBUFFER, rboDepth, -1, "rboDepth");
     glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
@@ -163,7 +163,7 @@ int main()
         shaderGeometryPass.setMat4("view", view);
         for (GLuint i = 0; i < objectPositions.size(); ++i)
         {
-            model = glm::mat4();
+            model = glm::mat4(1.0f);
             model = glm::translate(model, objectPositions[i]);
             model = glm::scale(model, glm::vec3(0.25f));
             shaderGeometryPass.setMat4("model", model);
