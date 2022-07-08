@@ -38,5 +38,11 @@
     <None Include="deferred_shading.frag">
       <Filter>头文件</Filter>
     </None>
+    <None Include="deferred_light_box.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="deferred_light_box.frag">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

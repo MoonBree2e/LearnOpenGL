@@ -63,7 +63,7 @@ int main()
 
     Shader shaderGeometryPass("g_buffer.vert", "g_buffer.frag");                    glObjectLabel(GL_PROGRAM, shaderGeometryPass.ID, -1, "shaderGeometryPass");
     Shader shaderLightingPass("deferred_shading.vert", "deferred_shading.frag");    glObjectLabel(GL_PROGRAM, shaderLightingPass.ID, -1, "shaderLightingPass");
-    //Shader shaderLightBox("deferred_light_box.vert", "deferred_light_box.frag");    glObjectLabel(GL_PROGRAM, shaderLightBox.ID,     -1, "shaderLightBox");
+    Shader shaderLightBox("deferred_light_box.vert", "deferred_light_box.frag");    glObjectLabel(GL_PROGRAM, shaderLightBox.ID,     -1, "shaderLightBox");
 
     shaderLightingPass.use();
     shaderLightingPass.setInt("gPosition", 0);
@@ -152,12 +152,12 @@ int main()
         // -----
         processInput(window);
 
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shaderGeometryPass");
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glm::mat4 projection = glm::perspective(camera.Fov, (GLfloat)SCR_WIDTH / (GLfloat)SCR_HEIGHT, 0.1f, 100.f);
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 model(1.0f);
-        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shaderGeometryPass");
         shaderGeometryPass.use();
         shaderGeometryPass.setMat4("projection", projection);
         shaderGeometryPass.setMat4("view", view);
@@ -171,8 +171,8 @@ int main()
         }
         glPopDebugGroup();
 
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shaderLightingPass");
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderLightingPass.use();
         glActiveTexture(GL_TEXTURE0);
@@ -188,11 +188,37 @@ int main()
             const GLfloat constant = 1.0f;
             const GLfloat linear = 0.7;
             const GLfloat quadratic = 1.8;
+            GLfloat lightMax = std::fmaxf(std::fmaxf(lightColors[i].r, lightColors[i].g), lightColors[i].b);
+            GLfloat radius = (-linear + std::sqrtf(linear * linear - 4 * quadratic * (constant - (256.0 / 5.0) * lightMax))) / (2 * quadratic);
             shaderLightingPass.setFloat(("lights[" + std::to_string(i) + "].Linear").c_str(), linear);
             shaderLightingPass.setFloat(("lights[" + std::to_string(i) + "].Quadratic").c_str(), quadratic);
+            shaderLightingPass.setFloat(("lights[" + std::to_string(i) + "].Radius").c_str(), radius);
         }
         shaderLightingPass.setVec3("viewPos", camera.Position);
         renderQuad();
+        glPopDebugGroup();
+
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shaderLightBox");
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        shaderLightBox.use();
+        shaderLightBox.setMat4("projection", projection);
+        shaderLightBox.setMat4("view", view);
+        for (GLuint i = 0; i < lightPositions.size(); i++)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, lightPositions[i]);
+            model = glm::scale(model, glm::vec3(0.25f));
+            shaderLightBox.setMat4("model", model);
+            shaderLightBox.setVec3("lightColor", lightColors[i]);
+            renderCube();
+        }
+        glPopDebugGroup();
+
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
