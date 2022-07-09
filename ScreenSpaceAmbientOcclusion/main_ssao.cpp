@@ -71,6 +71,12 @@ int main()
     //Shader shaderLightingPass("ssao.vert", "ssao_lighting.frag");    glObjectLabel(GL_PROGRAM, shaderLightingPass.ID, -1, "shaderLightingPass");
     Shader shaderSSAO("ssao.vert", "ssao.frag");    glObjectLabel(GL_PROGRAM, shaderSSAO.ID, -1, "shaderSSAO");
 
+    shaderSSAO.use();
+    shaderSSAO.setInt("gPositionDepth", 0);
+    shaderSSAO.setInt("gNormal", 1);
+    shaderSSAO.setInt("texNoise", 2);
+
+
     Model nanosuit("../Assets/nanosuit/nanosuit.obj");
     GLuint gBuffer;
     glGenFramebuffers(1, &gBuffer); glObjectLabel(GL_FRAMEBUFFER, gBuffer, -1, "gBuffer");
@@ -117,16 +123,18 @@ int main()
     
     glGenFramebuffers(1, &ssaoFBO);  glObjectLabel(GL_FRAMEBUFFER, ssaoFBO, -1, "ssaoFBO");
     glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
-    glGenTextures(1, &ssaoColorBuffer); glObjectLabel(GL_BUFFER, ssaoColorBuffer, -1, "ssaoColorBuffer");
+    glGenTextures(1, &ssaoColorBuffer); glObjectLabel(GL_TEXTURE, ssaoColorBuffer, -1, "ssaoColorBuffer");
+    glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "SSAO Framebuffer not complete!" << std::endl;
 
-
-    glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);  glObjectLabel(GL_FRAMEBUFFER, ssaoBlurFBO, -1, "ssaoBlurFBO");
-    glGenTextures(1, &ssaoColorBufferBlur);
+    glGenFramebuffers(1, &ssaoBlurFBO); glObjectLabel(GL_FRAMEBUFFER, ssaoBlurFBO, -1, "ssaoBlurFBO");
+    glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+    glGenTextures(1, &ssaoColorBufferBlur); glObjectLabel(GL_TEXTURE, ssaoColorBufferBlur, -1, "ssaoColorBufferBlur");
     glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -159,7 +167,7 @@ int main()
         glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
         ssaoNoise.push_back(noise);
     }
-    GLuint noiseTexture; glGenTextures(1, &noiseTexture);
+    GLuint noiseTexture; glGenTextures(1, &noiseTexture); glObjectLabel(GL_TEXTURE, noiseTexture, -1, "noiseTexture");
     glBindTexture(GL_TEXTURE_2D, noiseTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -178,7 +186,7 @@ int main()
         // -----
         processInput(window);
 
-        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shaderGeometryPass");
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "shaderGeometry Pass");
         glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glm::mat4 projection = glm::perspective(camera.Fov, (GLfloat)SCR_WIDTH / (GLfloat)SCR_HEIGHT, 0.1f, 50.0f);
@@ -204,7 +212,8 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glPopDebugGroup();
 
-        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ssao");
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "SSAO Pass");
+        glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
         glClear(GL_COLOR_BUFFER_BIT);
         shaderSSAO.use();
         glActiveTexture(GL_TEXTURE0);
@@ -219,6 +228,10 @@ int main()
         renderQuad();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glPopDebugGroup();
+
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Lighting Pass");
+        glPopDebugGroup();
+
 
 
         glfwSwapBuffers(window);
