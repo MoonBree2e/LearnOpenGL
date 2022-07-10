@@ -150,6 +150,7 @@
   <ItemGroup>
     <None Include="ssao.frag" />
     <None Include="ssao.vert" />
+    <None Include="ssao_blur.frag" />
     <None Include="ssao_geometry.frag" />
     <None Include="ssao_geometry.vert" />
     <None Include="ssao_lighting.frag" />

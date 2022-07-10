@@ -41,5 +41,8 @@
     <None Include="ssao.frag">
       <Filter>头文件</Filter>
     </None>
+    <None Include="ssao_blur.frag">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
