@@ -5,17 +5,18 @@
     <ASSIMP>D:\OpenGLSDK\assimp\</ASSIMP>
     <OPENGL>D:\OpenGLSDK\OpenGL\</OPENGL>
     <STB_IMAGE>D:\OpenGLSDK\stb_image\</STB_IMAGE>
+    <SPDLOG>D:\OpenGLSDK\spdlog\</SPDLOG>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <IncludePath>$(OPENGL)include;$(ASSIMP)include;$(STB_IMAGE)include;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENGL)include;$(ASSIMP)include;$(STB_IMAGE)include;$(SPDLOG)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL)lib;$(ASSIMP)lib\x64\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <IncludePath>$(OPENGL)include;$(ASSIMP)include;$(STB_IMAGE)include;$(IncludePath)</IncludePath>
+    <IncludePath>$(OPENGL)include;$(ASSIMP)include;$(STB_IMAGE)include;$(SPDLOG)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(OPENGL)lib;$(ASSIMP)lib\x64\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -48,6 +49,9 @@
     </BuildMacro>
     <BuildMacro Include="STB_IMAGE">
       <Value>$(STB_IMAGE)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SPDLOG">
+      <Value>$(SPDLOG)</Value>
     </BuildMacro>
   </ItemGroup>
 </Project>
