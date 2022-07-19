@@ -1,13 +1,20 @@
 #pragma once
 #ifndef SHADER_H
 #define SHADER_H
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <variant>
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
+#include <spdlog/spdlog.h>
+
+
 
 class Shader
 {
@@ -164,4 +171,92 @@ private:
         }
     }
 };
+
+namespace glcs
+{
+    class Shader
+    {
+    private:
+        GLuint ProgramID;
+
+        static std::string loadStringFromFile(const std::filesystem::path& vFilePath)
+        {
+            std::ifstream File(vFilePath);
+            if (!File.is_open()) {
+                spdlog::error("[Shader] failed to open {}", vFilePath.generic_string());
+                std::exit(EXIT_FAILURE);
+            }
+            return std::string(std::istreambuf_iterator<char>(File), std::istreambuf_iterator<char>());
+        }
+    public:
+        Shader(GLenum vType, const std::filesystem::path& vFilePath)
+        {
+            const std::string ShaderSourceCode = loadStringFromFile(vFilePath);
+            const char* ShaderSourceCodeC = ShaderSourceCode.c_str();
+            ProgramID = glCreateShaderProgramv(vType, 1, &ShaderSourceCodeC);
+            spdlog::info("[Shader] program {:x} created", ProgramID);
+
+            // check compile and link error
+            int Success = false;
+            glGetProgramiv(ProgramID, GL_LINK_STATUS, &Success);
+            if (Success == GL_FALSE)
+            {
+                spdlog::error("[Shader] failed to link program {:x}", ProgramID);
+
+                GLint LogSize = 0;
+                glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &LogSize);
+                std::vector<GLchar> ErrorLog(LogSize);
+                glGetProgramInfoLog(ProgramID, LogSize, &LogSize, &ErrorLog[0]);
+                std::string ErrorLogStr(ErrorLog.begin(), ErrorLog.end());
+                spdlog::error("[Shader] {}", ErrorLogStr);
+            }
+        }
+        Shader(const Shader& vOther) = delete;
+        Shader(Shader& vOther) : ProgramID(vOther.ProgramID) { vOther.ProgramID = 0; }
+        Shader& operator=(const Shader& vOther) = delete;
+        Shader& operator=(Shader&& vOther) 
+        {
+            if (this != &vOther)
+            {
+                release();
+                ProgramID = vOther.ProgramID;
+                vOther.ProgramID = 0;
+            }
+            return *this;
+        }
+
+        virtual ~Shader() { release(); }
+
+        void release()
+        {
+            if (ProgramID) {
+                spdlog::info("[Shader] release program {:x}", ProgramID);
+                glDeleteProgram(ProgramID);
+            }
+        }
+        
+        GLuint getProgram() const { return ProgramID; }
+        void setUniform(const std::string& vUniformName,
+                        const std::variant<bool, GLint, GLuint, GLfloat, glm::vec2, glm::vec3, glm::mat4>& vValue) const
+        {
+            const GLint UniformLocation = glGetUniformLocation(ProgramID, vUniformName.c_str());
+            struct Visitor
+            {
+                GLuint _ProgramID;
+                GLuint _UniformLocation;
+                Visitor(GLuint vProgram, GLuint vLocation) : _ProgramID(vProgram), _UniformLocation(vLocation) { }
+                
+                void operator()(bool value)   { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
+                void operator()(GLint value)  { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
+                void operator()(GLuint value) { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
+                void operator()(GLfloat value){ glProgramUniform1f(_ProgramID, _UniformLocation, value); }
+                void operator()(const glm::vec2& value) { glProgramUniform2fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
+                void operator()(const glm::vec3& value) { glProgramUniform3fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
+                void opeartor()(const glm::mat4& value) { glProgramUniformMatrix4fv(_ProgramID, _UniformLocation, 1, GL_FALSE, glm::value_ptr(value)); }
+
+            };
+        }
+
+    };
+}
 #endif
