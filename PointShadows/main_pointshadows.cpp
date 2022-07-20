@@ -1,14 +1,15 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <stb_image.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <stb_image.h>
+
 #include "shader.h"
 #include "camera.h"
-#include "model.h"
+#include <vector>
 #include <iostream>
 
 
@@ -43,7 +44,6 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-
 int main()
 {
     // glfw: initialize and configure
@@ -56,7 +56,6 @@ int main()
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-
     // glfw window creation
     // --------------------
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Point Shadows", NULL, NULL);
@@ -144,9 +143,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         GLfloat aspect = (GLfloat)SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT;
-        GLfloat near = 1.f, far = 25.f;
-        glm::mat4 shadowProj = glm::perspective(glm::radians(90.f), aspect, near, far);
-        std:vector<glm::mat4> shadowTransforms;
+        GLfloat Near = 1.f, Far = 25.f;
+        glm::mat4 shadowProj = glm::perspective(glm::radians(90.f), aspect, Near, Far);
+        std::vector<glm::mat4> shadowTransforms;
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1, 0, 0), glm::vec3(0, -1, 0)));
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0)));
         shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)));
@@ -163,7 +162,7 @@ int main()
         {
             simpleDepthShader.setMat4(("shadowMatrices[" + std::to_string(i) + "]").c_str(), shadowTransforms[i]);
         }
-        simpleDepthShader.setFloat("far_plane", far);
+        simpleDepthShader.setFloat("far_plane", Far);
         simpleDepthShader.setVec3("lightPos", lightPos);
         renderScene(simpleDepthShader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -182,7 +181,7 @@ int main()
         shader.setInt("shadows", shadows);
         shader.setInt("debug", debug);
 
-        shader.setFloat("far_plane", far);
+        shader.setFloat("far_plane", Far);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, woodTexture);
         glActiveTexture(GL_TEXTURE1);

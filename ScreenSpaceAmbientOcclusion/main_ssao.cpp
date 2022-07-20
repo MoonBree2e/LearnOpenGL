@@ -33,7 +33,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-GLfloat lerp(GLfloat a, GLfloat b, GLfloat f)
+GLfloat Mylerp(GLfloat a, GLfloat b, GLfloat f)
 {
     return a + f * (b - a);
 }
@@ -167,7 +167,7 @@ int main()
         GLfloat scale = GLfloat(i) / 64.0;
 
         // Scale samples s.t. they're more aligned to center of kernel
-        scale = lerp(0.1f, 1.0f, scale * scale);
+        scale = Mylerp(0.1f, 1.0f, scale * scale);
         sample *= scale;
         ssaoKernel.push_back(sample);
     }

@@ -34,14 +34,14 @@ unsigned int loadTexture(char const* path);
 
 enum LightCasterMode
 {
-    DIRECTIONAL,
-    POINT,
-    SPOT
+    _DIRECTIONAL,
+    _POINT,
+    _SPOT
 };
 
 int main()
 {
-    LightCasterMode Mode = SPOT;
+    LightCasterMode Mode = _SPOT;
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -78,15 +78,15 @@ int main()
     glEnableVertexAttribArray(2);
 
     std::string colorFrag;
-    if (Mode == DIRECTIONAL)
+    if (Mode == _DIRECTIONAL)
     {
         colorFrag = "colorDirectionalLight.frag";
     }
-    if (Mode == POINT)
+    if (Mode == _POINT)
     {
         colorFrag = "colorPointLight.frag";
     }
-    if (Mode == SPOT)
+    if (Mode == _SPOT)
     {
         colorFrag = "colorSpotLight.frag";
     }
@@ -94,18 +94,18 @@ int main()
     Shader lightingShader("color.vert", colorFrag.c_str());
 
     lightingShader.use();
-    if (Mode == DIRECTIONAL)
+    if (Mode == _DIRECTIONAL)
     {
         lightingShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
     }
-    if (Mode == POINT)
+    if (Mode == _POINT)
     {
         lightingShader.setVec3("light.position", lightPos);
         lightingShader.setFloat("light.constant", 1.0f);
         lightingShader.setFloat("light.linear", 0.09f);
         lightingShader.setFloat("light.quadratic", 0.032f);
     }
-    if (Mode == SPOT)
+    if (Mode == _SPOT)
     {
         lightingShader.setVec3("light.position", lightPos);
         lightingShader.setVec3("light.direction", cubePositions[0] - lightPos);
@@ -155,7 +155,7 @@ int main()
         lightingShader.setMat4("projection", projection);
         lightingShader.setVec3("viewPos", camera.Position);
 
-        if (Mode == SPOT)
+        if (Mode == _SPOT)
         {
             lightingShader.setVec3("light.position", lightPos);
             lightingShader.setVec3("light.direction", cubePositions[0] - lightPos);

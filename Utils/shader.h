@@ -12,9 +12,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#undef APIENTRY
 #include <spdlog/spdlog.h>
-
-
 
 class Shader
 {
@@ -172,6 +171,7 @@ private:
     }
 };
 
+
 namespace glcs
 {
     class Shader
@@ -244,7 +244,7 @@ namespace glcs
             {
                 GLuint _ProgramID;
                 GLuint _UniformLocation;
-                Visitor(GLuint vProgram, GLuint vLocation) : _ProgramID(vProgram), _UniformLocation(vLocation) { }
+                Visitor(GLuint vProgram, GLint vLocation) : _ProgramID(vProgram), _UniformLocation(vLocation) { }
                 
                 void operator()(bool value)   { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
                 void operator()(GLint value)  { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
@@ -252,11 +252,85 @@ namespace glcs
                 void operator()(GLfloat value){ glProgramUniform1f(_ProgramID, _UniformLocation, value); }
                 void operator()(const glm::vec2& value) { glProgramUniform2fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
                 void operator()(const glm::vec3& value) { glProgramUniform3fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
-                void opeartor()(const glm::mat4& value) { glProgramUniformMatrix4fv(_ProgramID, _UniformLocation, 1, GL_FALSE, glm::value_ptr(value)); }
-
+                void operator()(const glm::mat4& value) { glProgramUniformMatrix4fv(_ProgramID, _UniformLocation, 1, GL_FALSE, glm::value_ptr(value)); }
             };
+            std::visit(Visitor{ ProgramID, UniformLocation }, vValue);
+        }
+    };
+
+    class VertexShader : public Shader
+    {
+    public:
+        VertexShader(const std::filesystem::path& vFilePath) :Shader(GL_VERTEX_SHADER, vFilePath) {}
+    };
+
+    class GeometryShader : public Shader
+    {
+    public:
+        GeometryShader(const std::filesystem::path& vFilePath) :Shader(GL_GEOMETRY_SHADER, vFilePath) {}
+    };
+
+    class FragmentShader : public Shader
+    {
+    public:
+        FragmentShader(const std::filesystem::path& vFilePath) :Shader(GL_FRAGMENT_SHADER, vFilePath) {}
+    };
+
+    class ComputeShader : public Shader
+    {
+    public:
+        ComputeShader(const std::filesystem::path& vFilePath) :Shader(GL_COMPUTE_SHADER, vFilePath) {}
+    };
+
+    class Pipeline
+    {
+    public:
+        GLuint PipelineID;
+         
+        Pipeline()
+        {
+            glCreateProgramPipelines(1, &PipelineID);
+            spdlog::info("[Pipeline] pipeline {:x} created", PipelineID);
+        }
+        Pipeline(const Pipeline& other) = delete;
+        Pipeline(Pipeline&& other) : PipelineID(other.PipelineID) { other.PipelineID = 0; }
+        Pipeline& operator=(const Pipeline& vOther) = delete;
+        Pipeline& operator=(Pipeline&& vOther)
+        {
+            if (this != &vOther) {
+                release();
+                PipelineID = vOther.PipelineID;
+                vOther.PipelineID = 0;
+            }
+            return *this;
         }
 
+        ~Pipeline() { release(); }
+        void release()
+        {
+            if (PipelineID) {
+                spdlog::info("[Pipeline] release pipeline {:x}", PipelineID);
+                glDeleteProgramPipelines(1, &PipelineID);
+            }
+        }
+
+        void attachVertexShader(const VertexShader& vShader) const
+        {
+            glUseProgramStages(PipelineID, GL_VERTEX_SHADER_BIT, vShader.getProgram());
+        }
+
+        void attachFragmentShader(const FragmentShader& vShader) const {
+            glUseProgramStages(PipelineID, GL_FRAGMENT_SHADER_BIT, vShader.getProgram());
+        }
+
+        void attachComputeShader(const ComputeShader& vShader) const {
+            glUseProgramStages(PipelineID, GL_COMPUTE_SHADER_BIT, vShader.getProgram());
+        }
+
+
+        void activate() const { glBindProgramPipeline(PipelineID); }
+        void deactivate() const { glBindProgramPipeline(0); }
     };
+
 }
 #endif
