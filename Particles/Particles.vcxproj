@@ -149,6 +149,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Utils\buffer.h" />
+    <ClInclude Include="..\Utils\vertex_array_object.h" />
+    <ClInclude Include="particles.h" />
     <ClInclude Include="particle_renderer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

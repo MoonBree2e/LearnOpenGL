@@ -35,6 +35,9 @@ public:
     float MovementSpeed;
     float MouseSensitivity;
     float Fov;
+
+    float ZNear;
+    float ZFar;
     Camera(glm::vec3 pos = glm::vec3(0.f, 0.f, 0.f), glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float yaw = YAW, float pitch = PITCH) :
         Front(glm::vec3(0.f, 0.f, -1.f)), Position(pos), WorldUp(up),
         Yaw(yaw), Pitch(pitch), MovementSpeed(CAMERASPEED), MouseSensitivity(SENSITIVITY), Fov(FOV)
@@ -48,8 +51,12 @@ public:
         __updateCameraVectors();
     }
 
-    glm::mat4 getViewMatrix() {
+    glm::mat4 getViewMatrix() const {
         return glm::lookAt(Position, Position + Front, Up);
+    }
+
+    glm::mat4 getProjectionMatrix(uint32_t vWidth, uint32_t vHeight) const {
+        return glm::perspective(glm::radians(Fov), static_cast<float>(vWidth) / vHeight, ZNear, ZFar);
     }
 
     void processKeyboard(CameraMoveDirection vDirection, float vDeltaTime) {
@@ -90,6 +97,17 @@ public:
         Fov -= (float)vYoffset;
         if (Fov < 1.f) Fov = 1.f;
         if (Fov > 55.f) Fov = 55.f;
+    }
+
+    std::tuple<glm::vec3, glm::vec3> getRay(const glm::vec2& vWindowPos, const glm::uvec2& vResolution) const
+    {
+        const glm::mat4 view = getViewMatrix();
+        const glm::mat4 projection = getProjectionMatrix(vResolution.x, vResolution.y);
+        const glm::vec4 viewport = glm::vec4(0, 0, vResolution.x, vResolution.y);
+        const glm::vec3 p1 = glm::unProject(glm::vec3(vWindowPos, 0), view, projection, viewport);
+        const glm::vec3 p2 = glm::unProject(glm::vec3(vWindowPos, 1), view, projection, viewport);
+
+        return std::make_tuple(p1, glm::normalize(p2 - p1));
     }
 
 private:

@@ -23,5 +23,14 @@
     <ClInclude Include="particle_renderer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\Utils\buffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Utils\vertex_array_object.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="particles.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
