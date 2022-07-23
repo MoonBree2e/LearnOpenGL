@@ -36,8 +36,8 @@ public:
     float MouseSensitivity;
     float Fov;
 
-    float ZNear;
-    float ZFar;
+    float ZNear = 0.1f;
+    float ZFar = 50.0f;
     Camera(glm::vec3 pos = glm::vec3(0.f, 0.f, 0.f), glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float yaw = YAW, float pitch = PITCH) :
         Front(glm::vec3(0.f, 0.f, -1.f)), Position(pos), WorldUp(up),
         Yaw(yaw), Pitch(pitch), MovementSpeed(CAMERASPEED), MouseSensitivity(SENSITIVITY), Fov(FOV)

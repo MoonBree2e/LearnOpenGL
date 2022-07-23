@@ -28,7 +28,7 @@ private:
     bool m_Pause;
     glm::vec3 m_BaseColor;
 
-    Camera m_Camera;
+    Camera m_Camera{glm::vec3(0.f, 0.f, 2.f)};
 
     Particles m_Particles;
     Buffer m_ParticlesBuffer;
@@ -94,11 +94,16 @@ public:
     {
         //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-        m_VertexShader.setUniform("viewProjection", m_Camera.getProjectViewMatrix(m_Resolution.x, m_Resolution.y));
-        m_FragmentShader.setUniform("baseColor", m_BaseColor);
+        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Render pass");
+
         glClear(GL_COLOR_BUFFER_BIT);
         glViewport(0, 0, m_Resolution.x, m_Resolution.y);
+        m_VertexShader.setUniform("viewProjection", m_Camera.getProjectViewMatrix(m_Resolution.x, m_Resolution.y));
+        m_FragmentShader.setUniform("baseColor", m_BaseColor);
         m_Particles.draw(m_RenderPipeline);
+
+        glPopDebugGroup();
+        
         m_ElapsedTime += vDeletaTime;
         if (vDeletaTime > m_Dt && !m_Pause)
         {
