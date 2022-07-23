@@ -59,6 +59,10 @@ public:
         return glm::perspective(glm::radians(Fov), static_cast<float>(vWidth) / vHeight, ZNear, ZFar);
     }
 
+    glm::mat4 getProjectViewMatrix(uint32_t vWidth, uint32_t vHeight) const {
+        return getProjectionMatrix(vWidth, vHeight) * getViewMatrix();
+    }
+
     void processKeyboard(CameraMoveDirection vDirection, float vDeltaTime) {
         float Velocity = MovementSpeed * vDeltaTime;
         switch (vDirection)
