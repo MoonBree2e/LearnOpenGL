@@ -33,8 +33,8 @@ private:
     Particles m_Particles;
     Buffer m_ParticlesBuffer;
 
-    //ComputeShader m_UpdateParticlesCS;
-    //Pipeline m_UpdateParticlesPipelie;
+    ComputeShader m_UpdateParticlesCS;
+    Pipeline m_UpdateParticlesPipelie;
 
     VertexShader m_VertexShader;
     FragmentShader m_FragmentShader;
@@ -45,13 +45,13 @@ private:
 public:
     Renderer() :m_Resolution{ 512, 512 }, m_NParticles(1000000), m_GravityCenter{ 0 },m_GravityIntensity{0.1f},
         m_K{ 0.1f }, m_Dt{ 0.01f }, m_IncreaseK{ false }, m_Pause{ false }, m_BaseColor{ 0.2, 0.4, 0.8 },
-        //m_UpdateParticlesCS("update_particles.comp"), 
+        m_UpdateParticlesCS("update_particles.comp"), 
         m_VertexShader("render_particles.vert"), m_FragmentShader("render_particles.frag"),
         m_ElapsedTime{ 0 }
     {
         m_Particles.setParticles(&m_ParticlesBuffer);
 
-        //m_UpdateParticlesPipelie.attachComputeShader(m_UpdateParticlesCS);
+        m_UpdateParticlesPipelie.attachComputeShader(m_UpdateParticlesCS);
 
         // TODO: add README Description
         glEnable(GL_PROGRAM_POINT_SIZE);
@@ -92,7 +92,7 @@ public:
 
     void render(float vDeletaTime)
     {
-        //glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Render pass");
 
@@ -108,6 +108,16 @@ public:
         if (vDeletaTime > m_Dt && !m_Pause)
         {
             m_ElapsedTime = 0;
+
+            m_ParticlesBuffer.bindToShaderStorageBuffer(0);
+            m_UpdateParticlesCS.setUniform("gravityCenter", m_GravityCenter);
+            m_UpdateParticlesCS.setUniform("gravityIntensity", m_GravityIntensity);
+            m_UpdateParticlesCS.setUniform("increaseK", m_IncreaseK);
+            m_UpdateParticlesCS.setUniform("k", m_K);
+            m_UpdateParticlesCS.setUniform("dt", m_Dt);
+            m_UpdateParticlesPipelie.activate();
+            glDispatchCompute(std::ceil(m_NParticles / 128.f), 1, 1);
+            m_UpdateParticlesPipelie.deactivate();
         }
     }
 
