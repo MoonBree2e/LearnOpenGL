@@ -10,6 +10,12 @@
 
 #include "particle_renderer.h"
 
+const unsigned int SCR_WIDTH = 512;
+const unsigned int SCR_HEIGHT = 512;
+
+float lastX = (float)SCR_WIDTH / 2.0;
+float lastY = (float)SCR_HEIGHT / 2.0;
+bool firstMouse = true;
 Renderer* g_RenderPtr;
 
 static void framebufferSizeCallback([[maybe_unused]] GLFWwindow* window,
@@ -18,6 +24,8 @@ static void framebufferSizeCallback([[maybe_unused]] GLFWwindow* window,
 }
 
 void processInput(GLFWwindow* window, const ImGuiIO& io);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 int main()
 {
@@ -31,6 +39,10 @@ int main()
     glfwMakeContextCurrent(window);
 
     glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -99,5 +111,46 @@ int main()
 
 void processInput(GLFWwindow* window, const ImGuiIO& io)
 {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
 
+    
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        g_RenderPtr->processKeyboard(FORWARD, io.DeltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        g_RenderPtr->processKeyboard(BACKWARD, io.DeltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        g_RenderPtr->processKeyboard(LEFT, io.DeltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        g_RenderPtr->processKeyboard(RIGHT, io.DeltaTime);
+}
+
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    g_RenderPtr->processMouseMovement(xoffset, yoffset);
+}
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    g_RenderPtr->processMouseScroll(static_cast<float>(yoffset));
 }

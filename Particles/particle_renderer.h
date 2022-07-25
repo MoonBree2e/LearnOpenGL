@@ -121,6 +121,21 @@ public:
         }
     }
 
+    void processKeyboard(const CameraMoveDirection& vDir, float vDeltaTime)
+    {
+        m_Camera.processKeyboard(vDir, vDeltaTime);
+    }
+
+    void processMouseMovement(float vXoffset, float vYoffset, GLboolean constrainPitch = true)
+    {
+        m_Camera.processMouseMovement(vXoffset, vYoffset, constrainPitch);
+    }
+
+    void processMouseScroll(float vYoffset)
+    {
+        m_Camera.processMouseScroll(vYoffset);
+    }
+
     void setResolution(glm::uvec2 vResolution)
     {
         m_Resolution = vResolution;
