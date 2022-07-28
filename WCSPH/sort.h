@@ -9,13 +9,52 @@ namespace glcs {
 
     class Sort {
     public:
-        Sort();
+        Sort():m_CountCS("sort_count.comp"),m_LinearScanCS("sort_linearSort.comp"),m_ReorderCS("sort_reorder.comp"){};
         ~Sort() {}
 
-        SortRef setParticlesNum(int n)
+        SortRef setParticlesNum(GLuint n)
         {
-
+            m_PartcilesNum = n;
+            return _thisRef();
         }
+
+        SortRef setGridRes(glm::ivec3 r)
+        {
+            m_GriRes = r;
+            m_GridCellNum = r.x * r.y * r.z;
+            return _thisRef();
+        }
+
+        SortRef setGridSpacing(float s)
+        {
+            m_Spacing = s;
+            return _thisRef();
+        }
+
+        void setUp()
+        {
+            // spdlog::info
+            m_CountBuffer.setStorage<uint32_t>(m_GridCellNum);
+            m_OffsetBuffer.setStorage<uint32_t>(m_GridCellNum);
+            glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
+        }
+
+        void run(Buffer& inParticles, Buffer& outParticles) 
+        {
+            _clearCountBuffer();
+            _dispatchCountCS(inParticles);
+
+            _clearOffsetBuffer();
+            _dispatchLinearScanCS();
+
+            _clearCountBuffer();
+            _dispatchReorderCS(inParticles, outParticles);
+        }
+
+        Buffer& fetchCountBuffer() { return m_CountBuffer; }
+        Buffer& fetchOffsetBuffer() { return m_OffsetBuffer; }
+
+        static SortRef create() { return std::make_shared<Sort>(); }
 
     protected:
         void _clearCountBuffer()
@@ -65,7 +104,11 @@ namespace glcs {
             m_ReorderPipe.deactivate();
         }
 
+        SortRef _thisRef() { return std::make_shared<Sort>(*this); }
+
+
         float m_Spacing;
+        GLuint m_GridCellNum;
         GLuint m_PartcilesNum;
         glm::ivec3 m_GriRes;
 
