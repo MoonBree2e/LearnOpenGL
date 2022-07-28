@@ -9,6 +9,7 @@
 #include <spdlog/spdlog.h>
 
 #include "wcsph_renderer.h"
+#include "scene.h"
 
 const unsigned int SCR_WIDTH = 512;
 const unsigned int SCR_HEIGHT = 512;
@@ -17,6 +18,7 @@ float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
 Renderer* g_RenderPtr;
+SceneRef g_ScenePtr;
 
 static void framebufferSizeCallback([[maybe_unused]] GLFWwindow* window,
     int width, int height) {
@@ -61,6 +63,9 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 460 core");
 
     g_RenderPtr = new Renderer();
+    g_ScenePtr = Scene::create();
+    
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -89,7 +94,11 @@ int main()
         }
         ImGui::End();
 
+        // update
+        g_ScenePtr->update(io.DeltaTime);
+
         // Render
+        g_ScenePtr->draw();
         g_RenderPtr->render(io.DeltaTime);
 
         // RenderImGui

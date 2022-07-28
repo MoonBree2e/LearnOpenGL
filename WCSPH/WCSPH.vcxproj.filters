@@ -16,6 +16,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{127bf832-2169-49ee-9a57-49b6eba4c99f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shader">
+      <UniqueIdentifier>{a347d7ab-a7f3-4e6b-ab88-84a0a9a97d78}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Utils\glad.c">
@@ -44,6 +47,9 @@
     </ClCompile>
     <ClCompile Include="..\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -80,5 +86,28 @@
     <ClInclude Include="..\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="baseObject.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fluid.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="sort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="sort_count.comp">
+      <Filter>shader</Filter>
+    </None>
+    <None Include="sort_linearSort.comp">
+      <Filter>shader</Filter>
+    </None>
+    <None Include="sort_reorder.comp">
+      <Filter>shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

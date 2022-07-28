@@ -237,7 +237,7 @@ namespace glcs
         
         GLuint getProgram() const { return ProgramID; }
         void setUniform(const std::string& vUniformName,
-                        const std::variant<bool, GLint, GLuint, GLfloat, glm::vec2, glm::vec3, glm::mat4>& vValue) const
+                        const std::variant<bool, GLint, GLuint, GLfloat, glm::vec2, glm::vec3, glm::ivec3, glm::mat4>& vValue) const
         {
             const GLint UniformLocation = glGetUniformLocation(ProgramID, vUniformName.c_str());
             struct Visitor
@@ -252,6 +252,7 @@ namespace glcs
                 void operator()(GLfloat value){ glProgramUniform1f(_ProgramID, _UniformLocation, value); }
                 void operator()(const glm::vec2& value) { glProgramUniform2fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
                 void operator()(const glm::vec3& value) { glProgramUniform3fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
+                void operator()(const glm::ivec3& value){ glProgramUniform3iv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
                 void operator()(const glm::mat4& value) { glProgramUniformMatrix4fv(_ProgramID, _UniformLocation, 1, GL_FALSE, glm::value_ptr(value)); }
             };
             std::visit(Visitor{ ProgramID, UniformLocation }, vValue);

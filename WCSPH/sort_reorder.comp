@@ -33,10 +33,10 @@ void main() {
     if (particleID >= particleTotalNum) return;
 
     const Particle p = inParticles[particleID];
-    const ivec3 pGridIndex = clamp(ivec3(p / spacing), ivec3(0), gridRes -1);
+    const ivec3 pGridIndex = clamp(ivec3(p.position / spacing), ivec3(0), gridRes -1);
     const uint index = pGridIndex.z * gridRes.y * gridRes.x + pGridIndex.y * gridRes.x + pGridIndex.x;
     const uint globalOffset = offsets[index];
-    const uint localOffset = atomicAdd[counts[index], 1];
+    const uint localOffset = atomicAdd(counts[index], 1);
     const uint globalIndex = globalOffset + localOffset;
     outParticles[globalIndex] = p;
 }

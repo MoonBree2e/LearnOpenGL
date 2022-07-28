@@ -57,6 +57,12 @@ namespace glcs {
             this->BufferSize = data.size();
         }
 
+        template <typename T>
+        void clearData(const std::vector<T>& data, GLenum internalformat, GLenum format, GLenum type)
+        {
+            glClearNamedBufferData(BufferID, internalformat, format, type, data.data());
+        }
+
         void bindToShaderStorageBuffer(GLuint binding_point_index) const
         {
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding_point_index, BufferID);
