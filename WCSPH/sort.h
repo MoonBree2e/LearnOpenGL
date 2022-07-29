@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <memory>
+#include <spdlog/spdlog.h>
 
 #include "shader.h"
 #include "buffer.h"
@@ -33,7 +34,8 @@ namespace glcs {
 
         void setUp()
         {
-            // spdlog::info
+            spdlog::info("Sort setUp");
+
             m_CountBuffer.setStorage<uint32_t>(m_GridCellNum);
             m_OffsetBuffer.setStorage<uint32_t>(m_GridCellNum);
             glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);

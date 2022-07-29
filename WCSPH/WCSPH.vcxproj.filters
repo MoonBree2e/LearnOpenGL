@@ -51,6 +51,9 @@
     <ClCompile Include="scene.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="fluid.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="wcsph_renderer.h">
@@ -107,6 +110,12 @@
       <Filter>shader</Filter>
     </None>
     <None Include="sort_reorder.comp">
+      <Filter>shader</Filter>
+    </None>
+    <None Include="fluid_density.comp">
+      <Filter>shader</Filter>
+    </None>
+    <None Include="fluid_update.comp">
       <Filter>shader</Filter>
     </None>
   </ItemGroup>

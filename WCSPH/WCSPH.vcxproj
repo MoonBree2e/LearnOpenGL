@@ -155,6 +155,7 @@
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\Utils\glad.c" />
+    <ClCompile Include="fluid.cpp" />
     <ClCompile Include="main_wcsph.cpp" />
     <ClCompile Include="scene.cpp" />
   </ItemGroup>
@@ -176,6 +177,8 @@
     <ClInclude Include="wcsph_renderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fluid_density.comp" />
+    <None Include="fluid_update.comp" />
     <None Include="sort_count.comp" />
     <None Include="sort_linearSort.comp" />
     <None Include="sort_reorder.comp" />

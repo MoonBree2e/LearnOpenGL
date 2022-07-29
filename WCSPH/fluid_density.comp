@@ -1,0 +1,118 @@
+#version 460 core
+layout(local_BoxSize_x = 128, local_BoxSize_y = 1, local_BoxSize_z = 1) in;
+
+struct Particle {
+    vec3 position;
+    float density;
+    vec3 velocity;
+    float pressure;
+};
+
+layout(std430, binding = 0) restrict buffer Particles{
+    Particle particles[];
+};
+
+layout(std430, binding = 1) restrict readonly buffer Counts {
+    uint counts[];
+};
+
+layout(std430, binding = 2) restrict readonly buffer Offsets {
+    uint offsets[];
+};
+
+uniform float BoxSize;
+uniform float GridSpacing;
+uniform ivec3 GridRes;
+uniform int ParticlesNum;
+uniform float ParticleMass;
+uniform float KernelRadius;
+uniform float Stiffness;
+uniform float RestDensity;
+uniform float RestPressure;
+uniform float Poly6KernelConst;
+
+// neighborhood coordinate offsets
+const ivec3 NEIGHBORHOOD[27] = {
+    ivec3(-1, -1, -1), ivec3(-1, -1,  0), ivec3(-1, -1,  1),
+    ivec3(-1,  0, -1), ivec3(-1,  0,  0), ivec3(-1,  0,  1),
+    ivec3(-1,  1, -1), ivec3(-1,  1,  0), ivec3(-1,  1,  1),
+    ivec3( 0, -1, -1), ivec3( 0, -1,  0), ivec3( 0, -1,  1),
+    ivec3( 0,  0, -1), ivec3( 0,  0,  0), ivec3( 0,  0,  1),
+    ivec3( 0,  1, -1), ivec3( 0,  1,  0), ivec3( 0,  1,  1),
+    ivec3( 1, -1, -1), ivec3( 1, -1,  0), ivec3( 1, -1,  1),
+    ivec3( 1,  0, -1), ivec3( 1,  0,  0), ivec3( 1,  0,  1),
+    ivec3( 1,  1, -1), ivec3( 1,  1,  0), ivec3( 1,  1,  1)
+};
+
+// Equation (10) from Harada
+float poly6Kernel(float r){
+    return pow(KernelRadius * KernelRadius - r * r, 3) * Poly6KernelConst;
+}
+
+float wallDensity(vec3 p) {
+    float density = 0;
+
+    if (p.x < KernelRadius) {
+        density += ParticleMass * poly6Kernel(p.x);
+    } else if (p.x > BoxSize - KernelRadius) {
+        density += ParticleMass * poly6Kernel(BoxSize - p.x);
+    }
+
+    if (p.y < KernelRadius) {
+        density += ParticleMass * poly6Kernel(p.y);
+    } else if (p.y > BoxSize - KernelRadius) {
+        density += ParticleMass * poly6Kernel(BoxSize - p.y);
+    }
+
+    if (p.z < KernelRadius) {
+        density += ParticleMass * poly6Kernel(p.z);
+    } else if (p.y > BoxSize - KernelRadius) {
+        density += ParticleMass * poly6Kernel(BoxSize - p.z);
+    }
+
+    return density * 4;
+}
+
+void main() {
+    const uint particleID = gl_GlobalInvocationID.x;
+    if(particleID >= ParticlesNum) return;
+
+    Particle p = particles[particleID];
+    const ivec3 pGridCoord = clamp(ivec3(p.position / GridSpacing), ivec3(0), ivec3(GridRes - 1));
+    
+    float density = ParticleMass * poly6Kernel(0);
+    
+    // search the particles of each neighboring gridCell
+    #pragma unroll 1
+    for(uint gridCellDir = 0; gridCellDir < 27; ++gridCellDir) {
+        const ivec3 tCoord = pGridCoord + NEIGHBORHOOD[gridCellDir];
+
+        // bounds
+        if (any(lessThan(tCoord, ivec3(0))) || any(greaterThanEqual(tCoord, GridRes))) continue;
+        
+        const uint index = tCoord.z * GridRes.y * GridRes.x + tCoord.y * GridRes.x + tCoord.x;
+        const uint count = counts[index];
+        const uint offset = offsets[index];
+
+        for(uint i = 0; i < count; ++i) {
+            const uint otherParticleID = offset + i;
+            if (otherParticleID == particleID) continue;
+
+            const vec3 r = p.position - particles[otherParticleID].position;
+            const float dist = length(r);
+            if (dist >= KernelRadius) continue;
+            density += ParticleMass * poly6Kernel(dist);
+        }
+    }
+
+    p.density = density + wallDensity(p.position);
+
+    // Equation (5) from Harada
+    // p.pressure = restPressure + stiffness * (density - restDensity);
+    // Alternative presure computation to better preserve volume
+    // (Desbrun and Cani, 1996)
+    const float pressureConst = 3;
+    p.pressure = RestPressure + Stiffness * (pow(density / RestDensity, pressureConst) - 1);
+
+    particles[particleID] = p;
+}
