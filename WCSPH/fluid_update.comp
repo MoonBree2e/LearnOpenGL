@@ -35,8 +35,6 @@ uniform vec3 Gravity;
 uniform float ParticleMass;
 uniform float KernelRadius;
 uniform float ViscosityCoefficent;
-uniform vec3 CameraPosition;
-uniform vec3 MouseRayDirection;
 uniform float SpikyKernelConst;
 uniform float ViscosityKernelConst;
 
@@ -144,4 +142,40 @@ void main(){
     // Sum of Equations (6) and (7) and external forces from Herada
     viscosityForce += ViscosityCoefficent;
     const vec3 force = pressureForce + viscosityForce + externalForces;
+
+    // find the accelaration and integrate
+    const vec3 acceleration = force / (p.density + 1e-16);
+    vec3 vel = clamp(p.velocity + accelaration * dt, -MAX_SPEED, MAX_SPEED);
+    vec3 pos = p.position + vel * dt;
+
+    const float wallDamping = 0.3;
+    const float borderPadding = 0.001;
+
+    if (pos.x < borderPadding) {
+        vel.x *= -wallDamping;
+        pos.x = borderPadding;
+    } else if (pos.x > BoxSize - borderPadding) {
+        vel.x *= -wallDamping;
+        pos.x = BoxSize - borderPadding;
+    }
+
+    if (pos.y < borderPadding) {
+        vel.y *= -wallDamping;
+        pos.y  = borderPadding;
+    } else if (pos.y > BoxSize - borderPadding) {
+        vel.y *= -wallDamping;
+        pos.y = BoxSize - borderPadding;
+    }
+
+    if (pos.z < borderPadding) {
+        vel.z *= -wallDamping;
+        pos.z = borderPadding;
+    } else if (pos.z > BoxSize - borderPadding) {
+        vel.z *= -wallDamping;
+        pos.z = BoxSize - borderPadding;
+    }
+
+    p.velocity = vel;
+    p.position = pos;
+    outParticles[particleID] = p;
 }

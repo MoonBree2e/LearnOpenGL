@@ -15,6 +15,7 @@ class Fluid : public BaseObject {
 public:
     Fluid(const std::string& name): BaseObject(name)
     {
+        
     }
 
 public:
@@ -27,8 +28,8 @@ public:
     static FluidRef create(const std::string& name) { return std::make_shared<Fluid>(name); }
 
 protected:
-    void _dispatchDensityCS();
-    void _dispatchUpdateCS();
+    void _dispatchDensityCS(Buffer& ParticlesBuffer);
+    void _dispatchUpdateCS(Buffer& inParticles, Buffer& outParticles, float timeStep);
 
 private:
     GLuint m_ParticlesNum;
@@ -43,6 +44,17 @@ private:
     float m_ParticleMass;
     float m_ParticleRadius;
     float m_ViscosityCoefficient;
+    float m_Stiffness;
+    float m_RestDensity;
+    float m_RestPressure;
+    float m_Poly6KernelConst;
+
+    float m_TimeScale;
+    glm::vec3 m_GravityDir;
+    float m_GravityStrength;
+    float m_ViscosityCoefficent;
+    float m_SpikyKernelConst;
+    float m_ViscosityKernelConst;
 
     SortRef m_Sort;
 
