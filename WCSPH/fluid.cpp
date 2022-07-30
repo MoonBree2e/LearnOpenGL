@@ -1,4 +1,5 @@
 #include "fluid.h"
+#include <time.h>
 
 using namespace glcs;
 
@@ -43,7 +44,7 @@ void Fluid::_dispatchUpdateCS(Buffer& inParticles, Buffer& outParticles, float t
     m_UpdateCS.setUniform("Gravity", m_GravityDir * m_GravityStrength);
     m_UpdateCS.setUniform("ParticleMass", m_ParticleMass);
     m_UpdateCS.setUniform("KernelRadius", m_KernelRadiuis);
-    m_UpdateCS.setUniform("ViscosityCoefficent", m_ViscosityCoefficent);
+    m_UpdateCS.setUniform("ViscosityCoefficient", m_ViscosityCoefficient);
     m_UpdateCS.setUniform("SpikyKernelConst", m_SpikyKernelConst);
     m_UpdateCS.setUniform("ViscosityKernelConst", m_ViscosityKernelConst);
 
@@ -52,4 +53,42 @@ void Fluid::_dispatchUpdateCS(Buffer& inParticles, Buffer& outParticles, float t
     m_UpdatePipe.deactivate();
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
+void Fluid::_generateInitialParticles() {
+    srand(0);
+    spdlog::info("createing particles");
+    int num = m_ParticlesNum;
+    m_InitParticles.assign(num, Particle());
+    float distance = m_ParticleRadius * 1.75f;
+    
+    int d = int(ceil(std::cbrt(num))); //cube root num
+
+    float jitter = distance * 0.5f;
+    auto getJitter = [jitter]() { return ((float)rand() / RAND_MAX) * jitter - (jitter / 2.0f); };
+
+    for (int z = 0; z < d; ++z) {
+        for (int y = 0; y < d; ++y) {
+            for (int x = 0; x < d; ++x) {
+                int index = z * d * d + y * d + x;
+                if (index >= num) break;
+
+                // dam break
+                m_InitParticles[index].position = glm::vec3(x, y, z) * distance;
+                m_InitParticles[index].position += glm::vec3(getJitter(), getJitter(), getJitter());
+            }
+        }
+    }
+}
+
+void Fluid::_initBuffers() {
+    spdlog::info("init buffers");
+
+    const auto size = m_ParticlesNum * sizeof(Particle);
+    m_ParticlesBuffer.setStorage(m_InitParticles, 0);
+    m_SortedParticlesBuffer.setStorage(m_InitParticles, 0);
+    
+
+    glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
+
 }

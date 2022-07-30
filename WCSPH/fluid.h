@@ -15,7 +15,17 @@ class Fluid : public BaseObject {
 public:
     Fluid(const std::string& name): BaseObject(name)
     {
-        
+        m_ParticlesNum = 80000;
+        m_GridRes = glm::ivec3(21);
+        m_GravityStrength = 900.f;
+        m_GravityDir = glm::vec3(0, -1, 0);
+        m_ParticleRadius = 0.01f;
+        m_RestDensity = 500.f;
+        m_ViscosityCoefficient = 200;
+        m_Stiffness = 100.0f;
+        m_RestPressure = 0.0f;
+        m_RenderMode = 0;
+        m_TimeScale = 0.012f;
     }
 
 public:
@@ -31,9 +41,11 @@ protected:
     void _dispatchDensityCS(Buffer& ParticlesBuffer);
     void _dispatchUpdateCS(Buffer& inParticles, Buffer& outParticles, float timeStep);
 
+    void _generateInitialParticles();
+    void _initBuffers();
 private:
     GLuint m_ParticlesNum;
-    GLuint m_GridRes;
+    glm::ivec3 m_GridRes;
     GLuint m_GridCellsNum;
     GLuint m_WorkGroupsNum;
     GLuint m_RenderMode;
@@ -52,7 +64,6 @@ private:
     float m_TimeScale;
     glm::vec3 m_GravityDir;
     float m_GravityStrength;
-    float m_ViscosityCoefficent;
     float m_SpikyKernelConst;
     float m_ViscosityKernelConst;
 

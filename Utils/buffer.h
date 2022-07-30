@@ -57,6 +57,13 @@ namespace glcs {
         }
 
         template <typename T>
+        void setStorage(const std::vector<T>& data, GLenum usage)
+        {
+            glNamedBufferStorage(this->BufferID, sizeof(T) * data.size(), data.data(), usage);
+            this->BufferSize = data.size();
+        }
+
+        template <typename T>
         void setData(const std::vector<T>& data, GLenum usage)
         {
             glNamedBufferData(this->BufferID, sizeof(T) * data.size(), data.data(), usage);

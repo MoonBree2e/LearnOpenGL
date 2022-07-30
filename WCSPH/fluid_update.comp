@@ -34,7 +34,7 @@ uniform uint ParticlesNum;
 uniform vec3 Gravity;
 uniform float ParticleMass;
 uniform float KernelRadius;
-uniform float ViscosityCoefficent;
+uniform float ViscosityCoefficient;
 uniform float SpikyKernelConst;
 uniform float ViscosityKernelConst;
 
@@ -140,7 +140,7 @@ void main(){
     externalForces += wallForces(p.position); // + mouseForce(p)
 
     // Sum of Equations (6) and (7) and external forces from Herada
-    viscosityForce += ViscosityCoefficent;
+    viscosityForce += ViscosityCoefficient;
     const vec3 force = pressureForce + viscosityForce + externalForces;
 
     // find the accelaration and integrate
