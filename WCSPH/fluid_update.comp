@@ -145,7 +145,7 @@ void main(){
 
     // find the accelaration and integrate
     const vec3 acceleration = force / (p.density + 1e-16);
-    vec3 vel = clamp(p.velocity + accelaration * dt, -MAX_SPEED, MAX_SPEED);
+    vec3 vel = clamp(p.velocity + acceleration * dt, -MAX_SPEED, MAX_SPEED);
     vec3 pos = p.position + vel * dt;
 
     const float wallDamping = 0.3;
