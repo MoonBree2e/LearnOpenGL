@@ -90,5 +90,4 @@ void Fluid::_initBuffers() {
     
 
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
-
 }

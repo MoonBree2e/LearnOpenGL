@@ -8,10 +8,18 @@
 
 using namespace glcs;
 
-struct alignas(16) Particle {
-    glm::vec4 position = glm::vec4(0);
-    glm::vec4 velocity = glm::vec4(0);
-    float mass = 0;
+//struct Particle {
+//    alignas(16)glm::vec3 position = glm::vec3(0);
+//    alignas(16)glm::vec3 velocity = glm::vec3(0);
+//    alignas(16) float mass = 0;
+//
+//};
+
+struct Particle {
+    alignas(16)glm::vec3 position = glm::vec3(0);
+    alignas(16)glm::vec3 velocity = glm::vec3(0);
+    glm::vec2 padding;
+    alignas(8) float mass = 0;
 };
 
 class Particles {
@@ -33,7 +41,7 @@ public:
         VAO.activateVertexAttribution(0, 1, 3, GL_FLOAT, 4 * sizeof(GLfloat));
 
         // mass
-        VAO.activateVertexAttribution(0, 2, 1, GL_FLOAT, 8 * sizeof(GLfloat));
+        //VAO.activateVertexAttribution(0, 2, 1, GL_FLOAT, 8 * sizeof(GLfloat));
     }
 
     void draw(const Pipeline& pipleline) const {
