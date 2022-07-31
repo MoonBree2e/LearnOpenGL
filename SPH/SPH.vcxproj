@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{cc6fa18f-689f-4ae1-8200-c2e708bab548}</ProjectGuid>
-    <RootNamespace>WCSPH</RootNamespace>
+    <ProjectGuid>{8976f566-9f31-438a-bb24-21967df8c0e1}</ProjectGuid>
+    <RootNamespace>SPH</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -156,7 +156,7 @@
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\Utils\glad.c" />
     <ClCompile Include="fluid.cpp" />
-    <ClCompile Include="main_wcsph.cpp" />
+    <ClCompile Include="main_sph.cpp" />
     <ClCompile Include="scene.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -174,10 +174,11 @@
     <ClInclude Include="particles.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="sort.h" />
-    <ClInclude Include="wcsph_renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="fluid_density.comp" />
+    <None Include="fluid_render.frag" />
+    <None Include="fluid_render.vert" />
     <None Include="fluid_update.comp" />
     <None Include="sort_count.comp" />
     <None Include="sort_linearSort.comp" />

@@ -6,6 +6,11 @@
 #include "particles.h"
 #include "shader.h"
 #include "sort.h"
+#include "camera.h"
+#include "buffer.h"
+
+#define VIEWRES_X 800
+#define VIEWRES_Y 600
 
 namespace glcs {
 
@@ -13,7 +18,11 @@ typedef std::shared_ptr<class Fluid> FluidRef;
 
 class Fluid : public BaseObject {
 public:
-    Fluid(const std::string& name): BaseObject(name)
+    Fluid(const std::string& name) : BaseObject(name), 
+        m_UpdateCS("fluid_update.comp"),
+        m_VertexShader("fluid_render.vert"), 
+        m_DensityCS("fluid_density.comp"),
+        m_FragmentShader("fluid_render.frag")
     {
         m_ParticlesNum = 80000;
         m_GridRes = glm::ivec3(21);
@@ -26,16 +35,39 @@ public:
         m_RestPressure = 0.0f;
         m_RenderMode = 0;
         m_TimeScale = 0.012f;
+
+        m_DensityPipe.attachComputeShader(m_DensityCS);
+        m_UpdatePipe.attachComputeShader(m_UpdateCS);
+
+        m_RenderPipe.attachVertexShader(m_VertexShader);
+        m_RenderPipe.attachFragmentShader(m_FragmentShader);
+
+        glEnable(GL_PROGRAM_POINT_SIZE);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
+
+        m_Sort = Sort::create();
+
+        setUp();
+    }
+    ~Fluid() override{
+        m_ParticlesBuffer.release();
+        m_SortedParticlesBuffer.release();
     }
 
-public:
-
-    FluidRef setUp();
+    void setUp();
     void update(double time) override;
     void draw() override;
     void reset() override {}
 
-    static FluidRef create(const std::string& name) { return std::make_shared<Fluid>(name); }
+
+    int getNParticles() { return m_ParticlesNum; }
+    void setNParticles(int num) { m_ParticlesNum = num; }
+    void processKeyboard(const CameraMoveDirection& vDir, float vDeltaTime) { m_Camera.processKeyboard(vDir, vDeltaTime); }
+    void processMouseMovement(float vXoffset, float vYoffset, GLboolean constrainPitch = true) { m_Camera.processMouseMovement(vXoffset, vYoffset, constrainPitch); }
+    void processMouseScroll(float vYoffset) { m_Camera.processMouseScroll(vYoffset); }
+
+    static FluidRef create(std::string name) { return std::make_shared<Fluid>(name); }
 
 protected:
     void _dispatchDensityCS(Buffer& ParticlesBuffer);
@@ -43,6 +75,7 @@ protected:
 
     void _generateInitialParticles();
     void _initBuffers();
+
 private:
     GLuint m_ParticlesNum;
     glm::ivec3 m_GridRes;
@@ -76,13 +109,17 @@ private:
     Pipeline m_DensityPipe;
     Pipeline m_UpdatePipe;
 
+    VertexShader m_VertexShader;
+    FragmentShader m_FragmentShader;
+    Pipeline m_RenderPipe;
+
     Particles m_Particles;
     Particles m_SortedParticles;
 
 
     Buffer m_ParticlesBuffer;
     Buffer m_SortedParticlesBuffer;
+
+    Camera m_Camera{ glm::vec3(0.f, 0.f, 2.f) };
 };
-
-
 }

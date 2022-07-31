@@ -1,17 +1,21 @@
 #pragma once
+#pragma once
 #include <glm/glm.hpp>
 #include <memory>
-#include <spdlog/spdlog.h>
 
 #include "shader.h"
 #include "buffer.h"
+
 namespace glcs {
     typedef std::shared_ptr<class Sort> SortRef;
 
     class Sort {
     public:
-        Sort():m_CountCS("sort_count.comp"),m_LinearScanCS("sort_linearSort.comp"),m_ReorderCS("sort_reorder.comp"){};
-        ~Sort() {}
+        Sort() :m_CountCS("sort_count.comp"), m_LinearScanCS("sort_linearSort.comp"), m_ReorderCS("sort_reorder.comp") {}
+        ~Sort() {
+            m_CountBuffer.release();
+            m_OffsetBuffer.release();
+        }
 
         SortRef setParticlesNum(GLuint n)
         {
@@ -41,7 +45,7 @@ namespace glcs {
             glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
         }
 
-        void run(Buffer& inParticles, Buffer& outParticles) 
+        void run(Buffer& inParticles, Buffer& outParticles)
         {
             _clearCountBuffer();
             _dispatchCountCS(inParticles);
@@ -81,7 +85,7 @@ namespace glcs {
             m_CountCS.setUniform("gridRes", m_GriRes);
 
             m_CountPipe.activate();
-            glDispatchCompute(std::ceil(m_PartcilesNum / 128.f), 1, 1);
+            glDispatchCompute((GLuint)std::ceil(m_PartcilesNum / 128.f), 1, 1);
             m_CountPipe.deactivate();
         }
         void _dispatchLinearScanCS()
@@ -102,11 +106,11 @@ namespace glcs {
             m_OffsetBuffer.bindToShaderStorageBuffer(3);
 
             m_ReorderPipe.activate();
-            glDispatchCompute(std::ceil(m_PartcilesNum / 128.f), 1, 1);
+            glDispatchCompute((GLuint)std::ceil(m_PartcilesNum / 128.f), 1, 1);
             m_ReorderPipe.deactivate();
         }
 
-        SortRef _thisRef() { return std::make_shared<Sort>(*this); }
+        SortRef _thisRef() { return std::shared_ptr<Sort>(this); }
 
 
         float m_Spacing;

@@ -2,11 +2,34 @@
 #include <time.h>
 
 using namespace glcs;
+void Fluid::setUp()
+{
+    _generateInitialParticles();
+    _initBuffers();
+
+    m_Particles.setParticles(&m_ParticlesBuffer);
+    m_SortedParticles.setParticles(&m_SortedParticlesBuffer);
+}
 
 void Fluid::update(double time) {
     m_Sort->run(m_ParticlesBuffer, m_SortedParticlesBuffer);
-    _dispatchDensityCS();
-    _dispatchUpdateCS();
+    _dispatchDensityCS(m_ParticlesBuffer);
+    _dispatchUpdateCS(m_SortedParticlesBuffer, m_ParticlesBuffer, time);
+}
+
+void Fluid::draw()
+{
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Render Fluid pass");
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glViewport(0, 0, VIEWRES_X, VIEWRES_Y);
+
+    m_VertexShader.setUniform("viewProjection", m_Camera.getProjectViewMatrix(VIEWRES_X, VIEWRES_Y));
+    m_Particles.draw(m_RenderPipe);
+    glPopDebugGroup();
+
 }
 
 void Fluid::_dispatchDensityCS(Buffer& ParticlesBuffer) {
@@ -61,7 +84,7 @@ void Fluid::_generateInitialParticles() {
     int num = m_ParticlesNum;
     m_InitParticles.assign(num, Particle());
     float distance = m_ParticleRadius * 1.75f;
-    
+
     int d = int(ceil(std::cbrt(num))); //cube root num
 
     float jitter = distance * 0.5f;
@@ -87,7 +110,7 @@ void Fluid::_initBuffers() {
     const auto size = m_ParticlesNum * sizeof(Particle);
     m_ParticlesBuffer.setStorage(m_InitParticles, 0);
     m_SortedParticlesBuffer.setStorage(m_InitParticles, 0);
-    
+
 
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
 }

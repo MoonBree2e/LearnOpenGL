@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include "buffer.h"
 #include "shader.h"
 #include "vertex_array_object.h"
@@ -6,9 +7,9 @@
 
 using namespace glcs;
 
-struct alignas(16) Particle {
-    glm::vec3 position = glm::vec4(0);
-    glm::vec3 velocity = glm::vec4(0);
+struct Particle {
+    alignas(16) glm::vec3 position = glm::vec3(0);
+    alignas(16) glm::vec3 velocity = glm::vec3(0);
     float density = 0;
     float pressure = 0;
 };
@@ -27,16 +28,6 @@ public:
 
         // position
         VAO.activateVertexAttribution(0, 0, 3, GL_FLOAT, 0);
-
-        // velocity
-        VAO.activateVertexAttribution(0, 1, 3, GL_FLOAT, 3 * sizeof(GLfloat));
-
-        // density
-        VAO.activateVertexAttribution(0, 2, 1, GL_FLOAT, 6 * sizeof(GLfloat));
-
-        // pressure
-        VAO.activateVertexAttribution(0, 3, 1, GL_FLOAT, 7 * sizeof(GLfloat));
-
     }
 
     void draw(const Pipeline& pipleline) const {

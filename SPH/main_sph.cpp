@@ -1,28 +1,33 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#undef APIENTRY
+#include <spdlog/spdlog.h>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-#undef APIENTRY
-#include <spdlog/spdlog.h>
+#include <string>
 
-#include "wcsph_renderer.h"
-#include "scene.h"
+#include "fluid.h"
 
-const unsigned int SCR_WIDTH = 512;
-const unsigned int SCR_HEIGHT = 512;
+using namespace glcs;
+
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
 
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
-Renderer* g_RenderPtr;
-SceneRef g_ScenePtr;
+
+FluidRef g_FluidPtr;
+
+
 
 static void framebufferSizeCallback([[maybe_unused]] GLFWwindow* window,
     int width, int height) {
-    g_RenderPtr->setResolution(glm::uvec2(width, height));
+    glViewport(0, 0, width, height);
 }
 
 void processInput(GLFWwindow* window, const ImGuiIO& io);
@@ -36,7 +41,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(512, 512, "wcsph", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "sph", nullptr, nullptr);
     if (!window) return -1;
     glfwMakeContextCurrent(window);
 
@@ -44,12 +49,14 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSwapInterval(0);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         return -1;
     }
 
+    g_FluidPtr = Fluid::create("fluid");
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -61,11 +68,6 @@ int main()
     // init imgui backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 460 core");
-
-    g_RenderPtr = new Renderer();
-    g_ScenePtr = Scene::create();
-    
-
 
     while (!glfwWindowShouldClose(window))
     {
@@ -81,25 +83,23 @@ int main()
             ImGui::Text("Framerate %.3f", io.Framerate);
             ImGui::Separator();
 
-            static int NParticles = g_RenderPtr->getNParticles();
+            static int NParticles = g_FluidPtr->getNParticles();
             if (ImGui::InputInt("Number of particles", &NParticles)) {
                 NParticles = std::clamp(NParticles, 0, 10000000);
-                g_RenderPtr->setNParticles(NParticles);
+                g_FluidPtr->setNParticles(NParticles);
             }
-
-            static glm::vec3 BaseColor = g_RenderPtr->getBaseColor();
-            if (ImGui::ColorPicker3("BaseColor", glm::value_ptr(BaseColor))) {
-                g_RenderPtr->setBaseColor(BaseColor);
-            }
+            //static glm::vec3 BaseColor = g_RenderPtr->getBaseColor();
+            //if (ImGui::ColorPicker3("BaseColor", glm::value_ptr(BaseColor))) {
+            //    g_RenderPtr->setBaseColor(BaseColor);
+            //}
         }
         ImGui::End();
 
         // update
-        g_ScenePtr->update(io.DeltaTime);
+        //g_ScenePtr->update(io.DeltaTime);
 
         // Render
-        g_ScenePtr->draw();
-        g_RenderPtr->render(io.DeltaTime);
+        g_FluidPtr->draw();
 
         // RenderImGui
         glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "ImGui Render");
@@ -113,6 +113,8 @@ int main()
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    g_FluidPtr = NULL;
+    return 0;
 }
 
 
@@ -123,13 +125,13 @@ void processInput(GLFWwindow* window, const ImGuiIO& io)
 
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        g_RenderPtr->processKeyboard(FORWARD, io.DeltaTime);
+        g_FluidPtr->processKeyboard(FORWARD, io.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        g_RenderPtr->processKeyboard(BACKWARD, io.DeltaTime);
+        g_FluidPtr->processKeyboard(BACKWARD, io.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        g_RenderPtr->processKeyboard(LEFT, io.DeltaTime);
+        g_FluidPtr->processKeyboard(LEFT, io.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        g_RenderPtr->processKeyboard(RIGHT, io.DeltaTime);
+        g_FluidPtr->processKeyboard(RIGHT, io.DeltaTime);
 }
 
 // glfw: whenever the mouse moves, this callback is called
@@ -152,12 +154,12 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    g_RenderPtr->processMouseMovement(xoffset, yoffset);
+    g_FluidPtr->processMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    g_RenderPtr->processMouseScroll(static_cast<float>(yoffset));
+    g_FluidPtr->processMouseScroll(static_cast<float>(yoffset));
 }
