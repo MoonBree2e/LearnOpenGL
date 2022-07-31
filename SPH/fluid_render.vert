@@ -7,10 +7,13 @@ out gl_PerVertex {
     float gl_ClipDistance;
 };
 
-uniform mat4 viewProjection;
+uniform mat4 tt;
+uniform mat4 h;
 
 void main() {
-    gl_Position = viewProjection * vec4(_Position.xyz, 1.0);
+    gl_Position = h * vec4(_Position.xyz, 1.0);
+    gl_Position = tt * vec4(_Position.xyz, 1.0);
     gl_PointSize = 50.0;
 }
 
+1

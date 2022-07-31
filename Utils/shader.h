@@ -240,6 +240,9 @@ namespace glcs
                         const std::variant<bool, GLint, GLuint, GLfloat, glm::vec2, glm::vec3, glm::ivec3, glm::mat4>& vValue) const
         {
             const GLint UniformLocation = glGetUniformLocation(ProgramID, vUniformName.c_str());
+            if (UniformLocation == -1) {
+                spdlog::error("[Shader] {:x} SetUniform {:s} failed", ProgramID, vUniformName.c_str());
+            }
             struct Visitor
             {
                 GLuint _ProgramID;
@@ -248,7 +251,7 @@ namespace glcs
                 
                 void operator()(bool value)   { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
                 void operator()(GLint value)  { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
-                void operator()(GLuint value) { glProgramUniform1i(_ProgramID, _UniformLocation, value); }
+                void operator()(GLuint value) { glProgramUniform1ui(_ProgramID, _UniformLocation, value); }
                 void operator()(GLfloat value){ glProgramUniform1f(_ProgramID, _UniformLocation, value); }
                 void operator()(const glm::vec2& value) { glProgramUniform2fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }
                 void operator()(const glm::vec3& value) { glProgramUniform3fv(_ProgramID, _UniformLocation, 1, glm::value_ptr(value)); }

@@ -12,6 +12,7 @@ struct Particle {
     alignas(16) glm::vec3 velocity = glm::vec3(0);
     float density = 0;
     float pressure = 0;
+    glm::vec2 padding = glm::vec2(0);
 };
 
 class Particles {
@@ -28,6 +29,10 @@ public:
 
         // position
         VAO.activateVertexAttribution(0, 0, 3, GL_FLOAT, 0);
+
+        // velocity
+        VAO.activateVertexAttribution(0, 1, 3, GL_FLOAT, 4 * sizeof(GLfloat));
+
     }
 
     void draw(const Pipeline& pipleline) const {

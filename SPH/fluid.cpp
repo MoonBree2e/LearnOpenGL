@@ -25,8 +25,15 @@ void Fluid::draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glViewport(0, 0, VIEWRES_X, VIEWRES_Y);
+    glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
 
-    m_VertexShader.setUniform("viewProjection", m_Camera.getProjectViewMatrix(VIEWRES_X, VIEWRES_Y));
+    m_VertexShader.setUniform("h", m_Camera.getProjectViewMatrix(VIEWRES_X, VIEWRES_Y));
+    m_VertexShader.setUniform("tt", m_Camera.getProjectViewMatrix(VIEWRES_X, VIEWRES_Y));
+    m_FragmentShader.setUniform("cameraPos", m_Camera.Position);
+    m_FragmentShader.setUniform("lightPos", glm::vec3(0, m_BoxSize / 2, m_BoxSize));
+    glPointSize(m_PointRenderScale * m_ParticleRadius * 5);
     m_Particles.draw(m_RenderPipe);
     glPopDebugGroup();
 

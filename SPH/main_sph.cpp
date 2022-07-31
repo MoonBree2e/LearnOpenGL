@@ -123,6 +123,9 @@ void processInput(GLFWwindow* window, const ImGuiIO& io)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
+    if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    else glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         g_FluidPtr->processKeyboard(FORWARD, io.DeltaTime);

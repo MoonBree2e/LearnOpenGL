@@ -20,11 +20,11 @@ class Fluid : public BaseObject {
 public:
     Fluid(const std::string& name) : BaseObject(name), 
         m_UpdateCS("fluid_update.comp"),
-        m_VertexShader("fluid_render.vert"), 
         m_DensityCS("fluid_density.comp"),
+        m_VertexShader("fluid_render.vert"),
         m_FragmentShader("fluid_render.frag")
     {
-        m_ParticlesNum = 80000;
+        m_ParticlesNum = 8000;
         m_GridRes = glm::ivec3(21);
         m_GravityStrength = 900.f;
         m_GravityDir = glm::vec3(0, -1, 0);
@@ -41,10 +41,6 @@ public:
 
         m_RenderPipe.attachVertexShader(m_VertexShader);
         m_RenderPipe.attachFragmentShader(m_FragmentShader);
-
-        glEnable(GL_PROGRAM_POINT_SIZE);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
 
         m_Sort = Sort::create();
 
@@ -83,7 +79,7 @@ private:
     GLuint m_WorkGroupsNum;
     GLuint m_RenderMode;
 
-    float m_BoxSize;
+    float m_BoxSize = 1.0f;
     float m_GridSpacing;
     float m_KernelRadiuis;
     float m_ParticleMass;
@@ -99,6 +95,8 @@ private:
     float m_GravityStrength;
     float m_SpikyKernelConst;
     float m_ViscosityKernelConst;
+
+    float m_PointRenderScale = 300.0f;
 
     SortRef m_Sort;
 
