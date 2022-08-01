@@ -121,8 +121,5 @@
     <None Include="sort_count.comp">
       <Filter>shader</Filter>
     </None>
-    <None Include="test.comp">
-      <Filter>shader</Filter>
-    </None>
   </ItemGroup>
 </Project>
