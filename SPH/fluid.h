@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <cmath>
 
 #include "baseObject.h"
 #include "particles.h"
@@ -9,8 +10,10 @@
 #include "camera.h"
 #include "buffer.h"
 
+#define uint unsigned int
 #define VIEWRES_X 800
 #define VIEWRES_Y 600
+#define PI 3.14159265358979323846
 
 namespace glcs {
 
@@ -24,8 +27,10 @@ public:
         m_VertexShader("fluid_render.vert"),
         m_FragmentShader("fluid_render.frag")
     {
+        spdlog::info("[Fluid] create Fluid");
+        // particles
         m_ParticlesNum = 8000;
-        m_GridRes = glm::ivec3(21);
+        m_ParticleMass = m_ParticleRadius * 8.0f;
         m_GravityStrength = 900.f;
         m_GravityDir = glm::vec3(0, -1, 0);
         m_ParticleRadius = 0.01f;
@@ -36,6 +41,20 @@ public:
         m_RenderMode = 0;
         m_TimeScale = 0.012f;
 
+        // params
+        m_BoxSize = 1.f;
+        m_GridRes = glm::ivec3(21);
+        m_GridCellsNum = m_GridRes.x * m_GridRes.y * m_GridRes.z;
+        m_GridSpacing = m_BoxSize / glm::vec3(m_GridRes);
+
+        // kernel function
+        m_KernelRadiuis = m_ParticleRadius * 4.0f;
+        m_Poly6KernelConst = static_cast<float>(315.0 / (64.0 * PI * glm::pow(m_KernelRadiuis, 9)));
+        m_SpikyKernelConst = static_cast<float>(-45.0 / (PI * glm::pow(m_KernelRadiuis, 6)));
+        m_ViscosityKernelConst = static_cast<float>(45.0 / (PI * glm::pow(m_KernelRadiuis, 6)));
+
+        
+       
         m_DensityPipe.attachComputeShader(m_DensityCS);
         m_UpdatePipe.attachComputeShader(m_UpdateCS);
 
@@ -43,6 +62,10 @@ public:
         m_RenderPipe.attachFragmentShader(m_FragmentShader);
 
         m_Sort = Sort::create();
+        m_Sort->setParticlesNum(m_ParticlesNum);
+        m_Sort->setGridRes(m_GridRes);
+        m_Sort->setGridSpacing(m_GridSpacing);
+        m_Sort->setUp();
 
         setUp();
     }
@@ -71,16 +94,17 @@ protected:
 
     void _generateInitialParticles();
     void _initBuffers();
+    int _computeWorkGoupsNum() { return int(ceil(float(m_ParticlesNum) / float(m_WorkGroupSize)));  }
 
 private:
     GLuint m_ParticlesNum;
     glm::ivec3 m_GridRes;
     GLuint m_GridCellsNum;
-    GLuint m_WorkGroupsNum;
     GLuint m_RenderMode;
+    const uint m_WorkGroupSize = 128;
 
-    float m_BoxSize = 1.0f;
-    float m_GridSpacing;
+    float m_BoxSize;
+    glm::vec3 m_GridSpacing;
     float m_KernelRadiuis;
     float m_ParticleMass;
     float m_ParticleRadius;
@@ -114,9 +138,8 @@ private:
     Particles m_Particles;
     Particles m_SortedParticles;
 
-
-    Buffer m_ParticlesBuffer;
-    Buffer m_SortedParticlesBuffer;
+    Buffer m_ParticlesBuffer = Buffer("ParticlesBuffer");
+    Buffer m_SortedParticlesBuffer = Buffer("SortedParticlesBuffer");
 
     Camera m_Camera{ glm::vec3(0.f, 0.f, 2.f) };
 };

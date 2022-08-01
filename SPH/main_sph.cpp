@@ -96,7 +96,7 @@ int main()
         ImGui::End();
 
         // update
-        //g_ScenePtr->update(io.DeltaTime);
+        g_FluidPtr->update(io.DeltaTime);
 
         // Render
         g_FluidPtr->draw();

@@ -11,42 +11,56 @@ namespace glcs {
 
     class Sort {
     public:
-        Sort() :m_CountCS("sort_count.comp"), m_LinearScanCS("sort_linearSort.comp"), m_ReorderCS("sort_reorder.comp") {}
+        Sort() :m_CountCS("sort_count.comp"), m_LinearScanCS("sort_linearSort.comp"), m_ReorderCS("sort_reorder.comp") {
+            spdlog::info("[Sort] sort create");
+        }
         ~Sort() {
             m_CountBuffer.release();
             m_OffsetBuffer.release();
         }
 
-        SortRef setParticlesNum(GLuint n)
+        void setParticlesNum(GLuint n)
         {
             m_PartcilesNum = n;
-            return _thisRef();
         }
 
-        SortRef setGridRes(glm::ivec3 r)
+        void setGridRes(glm::ivec3 r)
         {
             m_GriRes = r;
             m_GridCellNum = r.x * r.y * r.z;
-            return _thisRef();
         }
 
-        SortRef setGridSpacing(float s)
+        void setGridSpacing(glm::vec3 s)
         {
             m_Spacing = s;
-            return _thisRef();
         }
 
         void setUp()
         {
-            spdlog::info("Sort setUp");
+            spdlog::info("[Sort] setUp");
+            m_CountPipe.attachComputeShader(m_CountCS);
+            m_LinearScanPipe.attachComputeShader(m_LinearScanCS);
+            m_ReorderPipe.attachComputeShader(m_ReorderCS);
 
             m_CountBuffer.setStorage<uint32_t>(m_GridCellNum);
             m_OffsetBuffer.setStorage<uint32_t>(m_GridCellNum);
             glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
+
+            //glObjectLabel(GL_BUFFER, m_CountBuffer.getName(), -1, "CountBuffer");
+            //glObjectLabel(GL_BUFFER, m_OffsetBuffer.getName(), -1, "OffsetBuffer");
+
+            glObjectLabel(GL_PROGRAM, m_CountCS.getProgram(), -1, "CountComputeShader");
+            glObjectLabel(GL_PROGRAM, m_LinearScanCS.getProgram(), -1, "LinearScanComputeShader");
+            glObjectLabel(GL_PROGRAM, m_ReorderCS.getProgram(), -1, "ReordertComputeShader");
+
+            glObjectLabel(GL_PROGRAM_PIPELINE, m_CountPipe.PipelineID, -1, "CountPipeline");
+            glObjectLabel(GL_PROGRAM_PIPELINE, m_LinearScanPipe.PipelineID, -1, "LinearScanPipeline");
+            glObjectLabel(GL_PROGRAM_PIPELINE, m_ReorderPipe.PipelineID, -1, "ReorderPipeline");
         }
 
         void run(Buffer& inParticles, Buffer& outParticles)
         {
+            spdlog::info("[Sort] run");
             _clearCountBuffer();
             _dispatchCountCS(inParticles);
 
@@ -65,18 +79,24 @@ namespace glcs {
     protected:
         void _clearCountBuffer()
         {
+            spdlog::info("[Sort] _clearCountBuffer");
+
             std::vector<GLuint> inital(m_PartcilesNum, 0);
             m_CountBuffer.clearData(inital, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
             glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
         }
         void _clearOffsetBuffer()
         {
+            spdlog::info("[Sort] _clearOffsetBuffer");
+
             std::vector<GLuint> inital(m_PartcilesNum, 0);
             m_OffsetBuffer.clearData(inital, GL_R32UI, GL_RED_INTEGER, GL_UNSIGNED_INT);
             glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
         }
         void _dispatchCountCS(Buffer& particleBuffer)
         {
+            spdlog::info("[Sort] _dispatchCountCS");
+
             particleBuffer.bindToShaderStorageBuffer(0);
             m_CountBuffer.bindToShaderStorageBuffer(1);
 
@@ -87,9 +107,12 @@ namespace glcs {
             m_CountPipe.activate();
             glDispatchCompute((GLuint)std::ceil(m_PartcilesNum / 128.f), 1, 1);
             m_CountPipe.deactivate();
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
         void _dispatchLinearScanCS()
         {
+            spdlog::info("[Sort] _dispatchLinearScanCS");
+
             m_LinearScanCS.setUniform("gridRes", m_GriRes);
             m_CountBuffer.bindToShaderStorageBuffer(0);
             m_OffsetBuffer.bindToShaderStorageBuffer(1);
@@ -97,9 +120,12 @@ namespace glcs {
             m_LinearScanPipe.activate();
             glDispatchCompute(1, 1, 1);
             m_LinearScanPipe.deactivate();
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
         void _dispatchReorderCS(Buffer& inParticles, Buffer& outParticles)
         {
+            spdlog::info("[Sort] _dispatchReorderCS");
+
             inParticles.bindToShaderStorageBuffer(0);
             outParticles.bindToShaderStorageBuffer(1);
             m_CountBuffer.bindToShaderStorageBuffer(2);
@@ -108,12 +134,13 @@ namespace glcs {
             m_ReorderPipe.activate();
             glDispatchCompute((GLuint)std::ceil(m_PartcilesNum / 128.f), 1, 1);
             m_ReorderPipe.deactivate();
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
 
         SortRef _thisRef() { return std::shared_ptr<Sort>(this); }
 
 
-        float m_Spacing;
+        glm::vec3 m_Spacing;
         GLuint m_GridCellNum;
         GLuint m_PartcilesNum;
         glm::ivec3 m_GriRes;
@@ -126,8 +153,8 @@ namespace glcs {
         Pipeline m_LinearScanPipe;
         Pipeline m_ReorderPipe;
 
-        Buffer m_CountBuffer;
-        Buffer m_OffsetBuffer;
+        Buffer m_CountBuffer = Buffer("CountBuffer");
+        Buffer m_OffsetBuffer = Buffer("OffsetBuffer");
     };
 
 }

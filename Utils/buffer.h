@@ -10,12 +10,14 @@ namespace glcs {
     private:
         GLuint BufferID;
         uint32_t BufferSize;
+        std::string Label;
     public:
-        Buffer() : BufferID{ 0 }, BufferSize{ 0 }
+        Buffer(const std::string& vLabel = "") : BufferID{0}, BufferSize{0}, Label(vLabel)
         {
             glCreateBuffers(1, &BufferID);
 
             spdlog::info("[Buffer] created buffer {:x}", BufferID);
+            if (vLabel != "") glObjectLabel(GL_BUFFER, BufferID, -1, Label.c_str());
         }
         Buffer(const Buffer& buffer) = delete;
         Buffer(Buffer&& vOther) : BufferID(vOther.BufferID), BufferSize(vOther.BufferSize)

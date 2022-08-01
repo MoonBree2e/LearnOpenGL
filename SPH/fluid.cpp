@@ -9,16 +9,28 @@ void Fluid::setUp()
 
     m_Particles.setParticles(&m_ParticlesBuffer);
     m_SortedParticles.setParticles(&m_SortedParticlesBuffer);
+
+    glObjectLabel(GL_PROGRAM, m_DensityCS.getProgram(), -1, "DensityComputeShader");
+    glObjectLabel(GL_PROGRAM, m_UpdateCS.getProgram(), -1, "UpdateComputeShader");
+    glObjectLabel(GL_PROGRAM_PIPELINE, m_DensityPipe.PipelineID, -1, "DensityPipeline");
+    glObjectLabel(GL_PROGRAM_PIPELINE, m_UpdatePipe.PipelineID, -1, "UpdatePipeline");
+
+    glObjectLabel(GL_PROGRAM, m_VertexShader.getProgram(), -1, "FluidRenderVertexShader");
+    glObjectLabel(GL_PROGRAM, m_FragmentShader.getProgram(), -1, "FluidRenderFragmentShader");
+    glObjectLabel(GL_PROGRAM_PIPELINE, m_RenderPipe.PipelineID, -1, "FluidRenderPipeline");
 }
 
 void Fluid::update(double time) {
+    spdlog::info("[Fluid] update");
+
     m_Sort->run(m_ParticlesBuffer, m_SortedParticlesBuffer);
-    _dispatchDensityCS(m_ParticlesBuffer);
+    _dispatchDensityCS(m_SortedParticlesBuffer);
     _dispatchUpdateCS(m_SortedParticlesBuffer, m_ParticlesBuffer, time);
 }
 
 void Fluid::draw()
 {
+    spdlog::info("[Fluid] draw");
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Render Fluid pass");
@@ -39,6 +51,7 @@ void Fluid::draw()
 }
 
 void Fluid::_dispatchDensityCS(Buffer& ParticlesBuffer) {
+    spdlog::info("[Fluid] _dispatchDensityCS");
     ParticlesBuffer.bindToShaderStorageBuffer(0);
     m_Sort->fetchCountBuffer().bindToShaderStorageBuffer(1);
     m_Sort->fetchOffsetBuffer().bindToShaderStorageBuffer(2);
@@ -54,12 +67,13 @@ void Fluid::_dispatchDensityCS(Buffer& ParticlesBuffer) {
     m_DensityCS.setUniform("Poly6KernelConst", m_RestDensity);
 
     m_DensityPipe.activate();
-    glDispatchCompute(std::ceil(m_ParticlesNum / 128.f), 1, 1);
+    glDispatchCompute(_computeWorkGoupsNum(), 1, 1);
     m_DensityPipe.deactivate();
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void Fluid::_dispatchUpdateCS(Buffer& inParticles, Buffer& outParticles, float timeStep) {
+    spdlog::info("[Fluid] _dispatchUpdateCS");
     inParticles.bindToShaderStorageBuffer(0);
     m_Sort->fetchCountBuffer().bindToShaderStorageBuffer(1);
     m_Sort->fetchOffsetBuffer().bindToShaderStorageBuffer(2);
@@ -78,7 +92,7 @@ void Fluid::_dispatchUpdateCS(Buffer& inParticles, Buffer& outParticles, float t
     m_UpdateCS.setUniform("ViscosityKernelConst", m_ViscosityKernelConst);
 
     m_UpdatePipe.activate();
-    glDispatchCompute(std::ceil(m_ParticlesNum / 128.f), 1, 1);
+    glDispatchCompute(_computeWorkGoupsNum(), 1, 1);
     m_UpdatePipe.deactivate();
 
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -86,7 +100,7 @@ void Fluid::_dispatchUpdateCS(Buffer& inParticles, Buffer& outParticles, float t
 
 void Fluid::_generateInitialParticles() {
     srand(0);
-    spdlog::info("createing particles");
+    spdlog::info("[Fluid] createing particles");
     int num = m_ParticlesNum;
     m_InitParticles.assign(num, Particle());
     float distance = m_ParticleRadius * 1.75f;
@@ -111,7 +125,7 @@ void Fluid::_generateInitialParticles() {
 }
 
 void Fluid::_initBuffers() {
-    spdlog::info("init buffers");
+    spdlog::info("[Fluid] init buffers");
 
     const auto size = m_ParticlesNum * sizeof(Particle);
     m_ParticlesBuffer.setStorage(m_InitParticles, 0);

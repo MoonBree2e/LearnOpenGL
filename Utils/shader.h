@@ -178,6 +178,7 @@ namespace glcs
     {
     private:
         GLuint ProgramID;
+        std::string Label;
 
         static std::string loadStringFromFile(const std::filesystem::path& vFilePath)
         {
@@ -189,7 +190,7 @@ namespace glcs
             return std::string(std::istreambuf_iterator<char>(File), std::istreambuf_iterator<char>());
         }
     public:
-        Shader(GLenum vType, const std::filesystem::path& vFilePath)
+        Shader(GLenum vType, const std::filesystem::path& vFilePath, const std::string& vLabel = "") : Label(vLabel)
         {
             const std::string ShaderSourceCode = loadStringFromFile(vFilePath);
             const char* ShaderSourceCodeC = ShaderSourceCode.c_str();
@@ -209,7 +210,9 @@ namespace glcs
                 glGetProgramInfoLog(ProgramID, LogSize, &LogSize, &ErrorLog[0]);
                 std::string ErrorLogStr(ErrorLog.begin(), ErrorLog.end());
                 spdlog::error("[Shader] {}", ErrorLogStr);
+                return;
             }
+            if (Label != "") glObjectLabel(GL_SHADER, ProgramID, -1, Label.c_str());
         }
         Shader(const Shader& vOther) = delete;
         Shader(Shader& vOther) : ProgramID(vOther.ProgramID) { vOther.ProgramID = 0; }
@@ -290,11 +293,13 @@ namespace glcs
     {
     public:
         GLuint PipelineID;
+        std::string Label;
          
-        Pipeline()
+        Pipeline(const std::string& vLabel = "") : Label(vLabel)
         {
             glCreateProgramPipelines(1, &PipelineID);
             spdlog::info("[Pipeline] pipeline {:x} created", PipelineID);
+            if (vLabel != "") glObjectLabel(GL_PROGRAM_PIPELINE, PipelineID, -1, Label.c_str());
         }
         Pipeline(const Pipeline& other) = delete;
         Pipeline(Pipeline&& other) : PipelineID(other.PipelineID) { other.PipelineID = 0; }
