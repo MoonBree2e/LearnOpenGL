@@ -5,9 +5,9 @@ const vec3 MAX_SPEED = vec3(50);
 
 struct Particle {
     vec3 position;
-    float density;
     vec3 velocity;
     float pressure;
+    float density;
 };
 
 layout(std430, binding = 0) restrict readonly buffer InParticles {
