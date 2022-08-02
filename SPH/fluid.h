@@ -28,6 +28,10 @@ public:
         m_FragmentShader("fluid_render.frag")
     {
         spdlog::info("[Fluid] create Fluid");
+        
+        m_Camera.setSensitivity(0.05);
+        m_Camera.setMoveSpeed(2);
+            
         // particles
         m_ParticlesNum = 8000;
         m_ParticleMass = m_ParticleRadius * 8.0f;
@@ -67,6 +71,9 @@ public:
         m_Sort->setGridSpacing(m_GridSpacing);
         m_Sort->setUp();
 
+        m_LinePiepe.attachVertexShader(m_LineVertexShader);
+        m_LinePiepe.attachFragmentShader(m_LineFragmentShader);
+
         setUp();
     }
     ~Fluid() override{
@@ -95,6 +102,9 @@ protected:
     void _generateInitialParticles();
     void _initBuffers();
     int _computeWorkGoupsNum() { return int(ceil(float(m_ParticlesNum) / float(m_WorkGroupSize)));  }
+
+    void _drawLine(glm::vec3 a, glm::vec3 b);
+    void _drawCube(std::vector<glm::vec3>&);
 
 private:
     GLuint m_ParticlesNum;
@@ -142,5 +152,11 @@ private:
     Buffer m_SortedParticlesBuffer = Buffer("SortedParticlesBuffer");
 
     Camera m_Camera{ glm::vec3(0.f, 0.f, 2.f) };
+
+    VertexShader m_LineVertexShader = VertexShader("line.vert");
+    FragmentShader m_LineFragmentShader = FragmentShader("line.frag");
+    Pipeline m_LinePiepe;
+    VertexArrayObject m_LineVAO;
+    Buffer m_LineBuffer = Buffer("LineBuffer");
 };
 }

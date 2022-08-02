@@ -14,16 +14,10 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="imgui">
-      <UniqueIdentifier>{ecdedf13-c1fc-4b82-97f0-61d0887a2158}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="shader">
-      <UniqueIdentifier>{2c6012b6-5e01-492e-a070-e469c1d653c1}</UniqueIdentifier>
+      <UniqueIdentifier>{f86e66e8-64de-4141-bdbf-595a7c368d5e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Utils\glad.c">
-      <Filter>资源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\imgui\imgui.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
@@ -45,13 +39,10 @@
     <ClCompile Include="..\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="main_sph.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\Utils\glad.c">
+      <Filter>资源文件</Filter>
     </ClCompile>
-    <ClCompile Include="fluid.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="scene.cpp">
+    <ClCompile Include="main_test.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,49 +74,13 @@
     <ClInclude Include="..\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="baseObject.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="fluid.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="particles.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="sort.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="scene.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="fluid_render.frag">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="fluid_render.vert">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="fluid_density.comp">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="fluid_update.comp">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="sort_reorder.comp">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="sort_linearSort.comp">
-      <Filter>shader</Filter>
-    </None>
-    <None Include="sort_count.comp">
-      <Filter>shader</Filter>
-    </None>
     <None Include="line.vert">
-      <Filter>shader</Filter>
+      <Filter>头文件</Filter>
     </None>
     <None Include="line.frag">
-      <Filter>shader</Filter>
+      <Filter>头文件</Filter>
     </None>
   </ItemGroup>
 </Project>

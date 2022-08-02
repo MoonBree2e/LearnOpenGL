@@ -63,6 +63,15 @@ public:
         return getProjectionMatrix(vWidth, vHeight) * getViewMatrix();
     }
 
+    void setSensitivity(float f)
+    {
+        MouseSensitivity = f;
+    }
+    void setMoveSpeed(float f)
+    {
+        MovementSpeed = f;
+    }
+
     void processKeyboard(CameraMoveDirection vDirection, float vDeltaTime) {
         float Velocity = MovementSpeed * vDeltaTime;
         switch (vDirection)

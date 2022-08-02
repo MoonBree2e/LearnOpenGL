@@ -46,8 +46,10 @@ void Fluid::draw()
     m_FragmentShader.setUniform("lightPos", glm::vec3(0, m_BoxSize / 2, m_BoxSize));
     glPointSize(m_PointRenderScale * m_ParticleRadius * 8);
     m_Particles.draw(m_RenderPipe);
+    std::vector<glm::vec3> cubeCoords = { glm::vec3(0,0,0), glm::vec3(1,0,0), glm::vec3(1,1,0), glm::vec3(0,1,0),
+                                      glm::vec3(0,0,1), glm::vec3(1,0,1), glm::vec3(1,1,1), glm::vec3(0,1,1) };
+    _drawCube(cubeCoords);
     glPopDebugGroup();
-
 }
 
 void Fluid::_dispatchDensityCS(Buffer& ParticlesBuffer) {
@@ -118,7 +120,7 @@ void Fluid::_generateInitialParticles() {
 
                 // dam break
                 m_InitParticles[index].position = glm::vec3(x, y, z) * distance;
-                m_InitParticles[index].position += glm::vec3(getJitter(), getJitter(), getJitter());
+                //m_InitParticles[index].position += glm::vec3(getJitter(), getJitter(), getJitter());
             }
         }
     }
@@ -133,4 +135,29 @@ void Fluid::_initBuffers() {
 
 
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
+}
+
+void Fluid::_drawLine(glm::vec3 a, glm::vec3 b)
+{
+    std::vector<glm::vec3> vec = { a, b };
+    m_LineBuffer.setData(vec, GL_STATIC_DRAW);
+    m_LineVAO.bindVertexBuffer(m_LineBuffer, 0, 0, 3 * sizeof(float));
+    m_LineVAO.activateVertexAttribution(0, 0, 3, GL_FLOAT, 0);
+
+    m_LineVertexShader.setUniform("viewProj", m_Camera.getProjectViewMatrix(VIEWRES_X, VIEWRES_Y));
+    m_LinePiepe.activate();
+    m_LineVAO.activate();
+    glDrawArrays(GL_LINES, 0, 2);
+    m_LineVAO.deactivate();
+    m_LinePiepe.deactivate();
+}
+
+void Fluid::_drawCube(std::vector<glm::vec3>& vec)
+{
+    assert(vec.size() == 8);
+    std::vector<int> index = { 0,1, 1,2, 2,3, 3,0, 0,4, 1,5, 2,6, 3,7, 4,5, 5,6, 6,7, 7,4 };
+    for (int i = 0; i < index.size(); i += 2)
+    {
+        _drawLine(vec[index[i]], vec[index[i + 1]]);
+    }
 }
