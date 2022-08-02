@@ -18,6 +18,11 @@ void Fluid::setUp()
     glObjectLabel(GL_PROGRAM, m_VertexShader.getProgram(), -1, "FluidRenderVertexShader");
     glObjectLabel(GL_PROGRAM, m_FragmentShader.getProgram(), -1, "FluidRenderFragmentShader");
     glObjectLabel(GL_PROGRAM_PIPELINE, m_RenderPipe.PipelineID, -1, "FluidRenderPipeline");
+
+    glObjectLabel(GL_PROGRAM, m_LineVertexShader.getProgram(), -1, "DrawLineVertexShader");
+    glObjectLabel(GL_PROGRAM, m_LineFragmentShader.getProgram(), -1, "DrawLineFragmentShader");
+    glObjectLabel(GL_PROGRAM_PIPELINE, m_LinePiepe.PipelineID, -1, "DrawLinePipeline");
+
 }
 
 void Fluid::update(double time) {

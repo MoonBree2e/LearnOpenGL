@@ -24,8 +24,8 @@ layout(std430, binding = 3) restrict readonly buffer Offsets {
     uint offsets[];
 };
 
-uniform float spacing;
-uniform int particleTotalNum;
+uniform vec3 spacing;
+uniform uint particleTotalNum;
 uniform ivec3 gridRes;
 
 void main() {

@@ -130,6 +130,10 @@ namespace glcs {
             outParticles.bindToShaderStorageBuffer(1);
             m_CountBuffer.bindToShaderStorageBuffer(2);
             m_OffsetBuffer.bindToShaderStorageBuffer(3);
+            
+            m_ReorderCS.setUniform("spacing", m_Spacing);
+            m_ReorderCS.setUniform("particleTotalNum", m_PartcilesNum);
+            m_ReorderCS.setUniform("gridRes", m_GriRes);
 
             m_ReorderPipe.activate();
             glDispatchCompute((GLuint)std::ceil(m_PartcilesNum / 128.f), 1, 1);
