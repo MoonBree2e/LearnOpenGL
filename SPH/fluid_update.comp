@@ -27,7 +27,7 @@ layout(std430, binding = 3) restrict writeonly buffer OutParticles {
 };
 
 uniform float BoxSize;
-uniform float GridSpacing;
+uniform vec3 GridSpacing;
 uniform ivec3 GridRes;
 uniform float dt;
 uniform uint ParticlesNum;
@@ -111,7 +111,7 @@ void main(){
 
         const uint index = tCoord.z * GridRes.y * GridRes.x + tCoord.y * GridRes.x + tCoord.x;
         const uint count = counts[index];
-        const uint offset = counts[index];
+        const uint offset = offsets[index];
 
         for (uint i = 0; i < count; ++i) {
             const uint otherParticleID = offset + i;
@@ -140,7 +140,7 @@ void main(){
     externalForces += wallForces(p.position); // + mouseForce(p)
 
     // Sum of Equations (6) and (7) and external forces from Herada
-    viscosityForce += ViscosityCoefficient;
+    viscosityForce *= ViscosityCoefficient;
     const vec3 force = pressureForce + viscosityForce + externalForces;
 
     // find the accelaration and integrate

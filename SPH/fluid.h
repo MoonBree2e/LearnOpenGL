@@ -33,7 +33,7 @@ public:
         m_Camera.setMoveSpeed(2);
             
         // particles
-        m_ParticlesNum = 8000;
+        m_ParticlesNum = 40000;
         m_ParticleRadius = 0.01f;
         m_ParticleMass = m_ParticleRadius * 8.0f;
         m_GravityStrength = 900.f;
