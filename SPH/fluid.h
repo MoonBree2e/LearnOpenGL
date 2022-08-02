@@ -34,10 +34,10 @@ public:
             
         // particles
         m_ParticlesNum = 8000;
+        m_ParticleRadius = 0.01f;
         m_ParticleMass = m_ParticleRadius * 8.0f;
         m_GravityStrength = 900.f;
         m_GravityDir = glm::vec3(0, -1, 0);
-        m_ParticleRadius = 0.01f;
         m_RestDensity = 500.f;
         m_ViscosityCoefficient = 200;
         m_Stiffness = 100.0f;

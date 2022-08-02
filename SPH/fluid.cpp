@@ -58,6 +58,10 @@ void Fluid::draw()
 }
 
 void Fluid::_dispatchDensityCS(Buffer& ParticlesBuffer) {
+    //Buffer debug("debug");
+    //debug.setStorage<uint32_t>(63*128);
+    //debug.bindToShaderStorageBuffer(3);
+
     spdlog::info("[Fluid] _dispatchDensityCS");
     ParticlesBuffer.bindToShaderStorageBuffer(0);
     m_Sort->fetchCountBuffer().bindToShaderStorageBuffer(1);
@@ -67,11 +71,12 @@ void Fluid::_dispatchDensityCS(Buffer& ParticlesBuffer) {
     m_DensityCS.setUniform("GridSpacing", m_GridSpacing);
     m_DensityCS.setUniform("GridRes", m_GridRes);
     m_DensityCS.setUniform("ParticlesNum", m_ParticlesNum);
+    m_DensityCS.setUniform("ParticleMass", m_ParticleMass);
     m_DensityCS.setUniform("KernelRadius", m_KernelRadiuis);
     m_DensityCS.setUniform("Stiffness", m_Stiffness);
     m_DensityCS.setUniform("RestDensity", m_RestDensity);
     m_DensityCS.setUniform("RestPressure", m_RestPressure);
-    m_DensityCS.setUniform("Poly6KernelConst", m_RestDensity);
+    m_DensityCS.setUniform("Poly6KernelConst", m_Poly6KernelConst);
 
     m_DensityPipe.activate();
     glDispatchCompute(_computeWorkGoupsNum(), 1, 1);

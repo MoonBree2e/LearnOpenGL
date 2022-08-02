@@ -8,11 +8,10 @@
 using namespace glcs;
 
 struct Particle {
-    alignas(16) glm::vec3 position = glm::vec3(0);
-    alignas(16) glm::vec3 velocity = glm::vec3(0);
+    glm::vec3 position = glm::vec3(0);
     float density = 0;
+    glm::vec3 velocity = glm::vec3(0);
     float pressure = 0;
-    glm::vec2 padding = glm::vec2(0);
 };
 
 class Particles {
