@@ -169,8 +169,11 @@
     <ClInclude Include="..\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bank_conflict_free_scan.comp" />
     <None Include="line.frag" />
     <None Include="line.vert" />
+    <None Include="parallel_scan.comp" />
+    <None Include="up_down_sweep_scan.comp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

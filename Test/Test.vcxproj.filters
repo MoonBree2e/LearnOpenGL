@@ -82,5 +82,14 @@
     <None Include="line.frag">
       <Filter>头文件</Filter>
     </None>
+    <None Include="parallel_scan.comp">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="up_down_sweep_scan.comp">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="bank_conflict_free_scan.comp">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

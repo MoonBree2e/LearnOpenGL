@@ -1,0 +1,88 @@
+//https://stackoverflow.com/questions/9689185/conflict-free-offset-macro-used-in-the-parallel-prefix-algorithm-from-gpu-gems-3
+// what the hell
+#version 460 core
+
+#define NUM_BANKS 32
+#define LOG_NUM_BANKS 5
+
+#ifdef ZERO_BANK_CONFLICTS
+#define CONFLICT_FREE_OFFSET(n) ((n) >> NUM_BANKS + (n) >> (2 * LOG_NUM_BANKS))
+#else
+#define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_NUM_BANKS)
+#endif
+
+layout (local_size_x = 1024) in;
+layout (binding = 0) buffer block1
+{
+	float data[];
+};
+
+
+
+shared float shared_data[gl_WorkGroupSize.x * 2];
+void main()
+{
+	uint thid = gl_LocalInvocationID.x;
+	uint offset = 1;
+	uint n = gl_WorkGroupSize.x * 2;
+	
+	// A
+	uint ai = thid;
+	uint bi = thid + (n/2);
+
+	uint bankOffsetA = CONFLICT_FREE_OFFSET(ai);
+	uint bankOffsetB = CONFLICT_FREE_OFFSET(bi);
+
+	shared_data[ai + bankOffsetA] = data[ai];
+	shared_data[bi + bankOffsetB] = data[bi];
+
+	barrier();
+	memoryBarrierShared();
+
+	for(uint d = n>>1; d >0; d>>=1)
+	{
+		if(thid < d)
+		{
+			// B
+			uint ai = offset * (2 * thid + 1) - 1;
+			uint bi = offset * (2 * thid + 2) - 1;
+			ai += CONFLICT_FREE_OFFSET(ai);
+			bi += CONFLICT_FREE_OFFSET(bi);
+
+			shared_data[bi] += shared_data[ai];
+		}
+		offset *= 2;
+		barrier();
+		memoryBarrierShared();
+	}
+
+	// C
+	if(thid == 0) { shared_data[n-1 + CONFLICT_FREE_OFFSET(n-1)] = 0;}
+
+	for( uint d = 1; d < n; d *= 2)
+	{
+		offset >>= 1;
+		barrier();
+		memoryBarrierShared();
+
+		if (thid < d)
+		{
+			//D
+			uint ai = offset * (2 * thid + 1) - 1;
+			uint bi = offset * (2 * thid + 2) - 1;
+			ai += CONFLICT_FREE_OFFSET(ai);
+			bi += CONFLICT_FREE_OFFSET(bi);
+
+			float t = shared_data[ai];
+			shared_data[ai] = shared_data[bi];
+			shared_data[bi] += t;
+		}
+	}
+
+	barrier();
+	memoryBarrierShared();
+
+	// E
+	data[ai] = shared_data[ai + bankOffsetA];
+	data[bi] = shared_data[bi + bankOffsetB];
+}
