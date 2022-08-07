@@ -46,7 +46,7 @@ int main()
 {
     //parallelScan();
     //preScan();
-    //conflictFreeScan();
+    conflictFreeScan();
 
     return 0;
 }
@@ -368,14 +368,14 @@ int conflictFreeScan()
     ComputeShader scanCS("bank_conflict_free_scan.comp");
     Pipeline scanPipe;
     scanPipe.attachComputeShader(scanCS);
-    int length = 2047;
+    int length = 3000;
     Buffer d_array;
 
     std::vector<float> vec;
     std::vector<float> o_vec;
 
     o_vec.resize(length);
-    for (int i = 1; i <= length; ++i) vec.push_back(i);
+    for (int i = 1; i <= length; ++i) vec.push_back(1);
 
     d_array.setData(vec, GL_DYNAMIC_DRAW);
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
@@ -400,7 +400,7 @@ int conflictFreeScan()
     double begin = glfwGetTime();
 
     scanPipe.activate();
-    glDispatchCompute(1, 1, 1);
+    glDispatchCompute((GLuint)(ceil(length / 2048.f)), 1, 1);
     scanPipe.deactivate();
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
 
@@ -409,11 +409,11 @@ int conflictFreeScan()
 
     glGetNamedBufferSubData(d_array.getName(), 0, length * sizeof(float), o_vec.data());
     for (int i = 1; i < vec.size(); ++i) vec[i] += vec[i - 1];
-    for (int i = 0; i < vec.size(); ++i) vec[i] -= (i + 1);
+    for (int i = 0; i < vec.size(); ++i) vec[i] -= 1;
 
     for (int i = 0; i < o_vec.size(); ++i)
     {
-        printf("id:%d, [%f,  %f]\n", i + 1, o_vec[i], vec[i]);
+        printf("id:%d, [%f,  %f]\n", i, o_vec[i], vec[i]);
     }
 
     return 0;
