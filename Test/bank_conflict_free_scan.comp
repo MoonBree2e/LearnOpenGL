@@ -17,13 +17,17 @@ layout (binding = 0) buffer block1
 	float data[];
 };
 
+layout (binding = 1) buffer block2
+{
+	float group_data[];
+};
 
 
 shared float shared_data[gl_WorkGroupSize.x * 3];
 void main()
 {
 	uint thid = gl_LocalInvocationID.x;
-	uint gpid =gl_WorkGroupID.x * gl_WorkGroupSize.x * 2;
+	uint gpid = gl_WorkGroupID.x * gl_WorkGroupSize.x * 2;
 	uint offset = 1;
 	uint n = gl_WorkGroupSize.x * 2;
 	
@@ -86,4 +90,8 @@ void main()
 	// E
 	data[gpid + ai] = shared_data[ai + bankOffsetA];
 	data[gpid + bi] = shared_data[bi + bankOffsetB];
+
+	if(thid == gl_WorkGroupSize.x) { 
+		group_data[gl_WorkGroupID.x] = shared_data[bi + bankOffsetB];
+	}
 }
