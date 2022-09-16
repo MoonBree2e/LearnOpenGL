@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32510.428
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32811.315
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenGLInstance", "OpenGLInstance\OpenGLInstance.vcxproj", "{57891E80-784C-4FF1-830A-AB980F1A56AD}"
 EndProject
@@ -74,6 +74,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SPH", "SPH\SPH.vcxproj", "{8976F566-9F31-438A-BB24-21967DF8C0E1}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{6E685C66-3177-4E02-B334-AB377CB77276}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshShaderTriangle", "MeshShaderTriangle\MeshShaderTriangle.vcxproj", "{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -371,6 +373,14 @@ Global
 		{6E685C66-3177-4E02-B334-AB377CB77276}.Release|x64.Build.0 = Release|x64
 		{6E685C66-3177-4E02-B334-AB377CB77276}.Release|x86.ActiveCfg = Release|Win32
 		{6E685C66-3177-4E02-B334-AB377CB77276}.Release|x86.Build.0 = Release|Win32
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Debug|x64.ActiveCfg = Debug|x64
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Debug|x64.Build.0 = Debug|x64
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Debug|x86.ActiveCfg = Debug|Win32
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Debug|x86.Build.0 = Debug|Win32
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Release|x64.ActiveCfg = Release|x64
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Release|x64.Build.0 = Release|x64
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Release|x86.ActiveCfg = Release|Win32
+		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,78 @@
+#version 450
+
+#extension GL_NV_mesh_shader : require
+
+// https://www.khronos.org/registry/OpenGL/extensions/NV/NV_mesh_shader.txt
+// https://raw.githubusercontent.com/KhronosGroup/GLSL/master/extensions/nv/GLSL_NV_mesh_shader.txt
+// https://devblogs.nvidia.com/introduction-turing-mesh-shaders/
+
+
+
+// Set the number of threads per workgroup (always one-dimensional).
+layout(local_size_x=3) in; // if gl_LocalInvocationID.x is used
+//layout(local_size_x=1) in; // if gl_LocalInvocationID.x is NOT used
+
+
+// maximum allocation size for each meshlet
+layout(max_vertices=3, max_primitives=1) out;
+
+// the primitive type (points,lines or triangles)
+layout(triangles) out;
+
+
+
+
+// define your own vertex output blocks as usual
+out PerVertexData
+{
+  vec4 color;
+} v_out[];   // [max_vertices]
+
+
+// the actual amount of primitives the workgroup outputs ( <= max_primitives)
+//out uint gl_PrimitiveCountNV;
+
+// an index buffer, using list type indices (strips are not supported here)
+//out uint gl_PrimitiveIndicesNV[];
+
+
+
+uniform float scale;
+
+const vec3 vertices[3] = {vec3(-1,-1,0), vec3(0,1,0), vec3(1,-1,0)};
+const vec3 colors[3] = {vec3(1.0,0.0,0.0), vec3(0.0,1.0,0.0), vec3(0.0,0.0,1.0)};
+
+void main()
+{
+
+  // layout(local_size_x=3) in;
+
+  uint id = gl_LocalInvocationID.x;
+  gl_MeshVerticesNV[id].gl_Position = vec4(vertices[id]*scale, 1.0);
+  gl_PrimitiveIndicesNV[id] = id;
+  v_out[id].color = vec4(colors[id], 1.0);
+
+  barrier();
+
+  if (gl_LocalInvocationID.x == 0)
+    gl_PrimitiveCountNV = 1;
+
+
+  /*
+  // layout(local_size_x=1) in;
+
+  gl_MeshVerticesNV[0].gl_Position = vec4(vertices[0] * scale, 1.0); 
+  gl_MeshVerticesNV[1].gl_Position = vec4(vertices[1] * scale, 1.0); 
+  gl_MeshVerticesNV[2].gl_Position = vec4(vertices[2] * scale, 1.0); 
+
+  v_out[0].color = vec4(colors[0], 1.0);
+  v_out[1].color = vec4(colors[1], 1.0);
+  v_out[2].color = vec4(colors[2], 1.0);
+
+  gl_PrimitiveIndicesNV[0] = 0;
+  gl_PrimitiveIndicesNV[1] = 1;
+  gl_PrimitiveIndicesNV[2] = 2;
+  
+  gl_PrimitiveCountNV = 1;
+  */
+}
