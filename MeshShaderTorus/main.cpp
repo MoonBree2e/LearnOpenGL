@@ -9,6 +9,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <cstdio>
+#include <numeric>
 
 #include "shader.h"
 #include "camera.h"
@@ -88,12 +89,19 @@ int main()
     
     std::vector<float> TorusVertices;
     createTorus(TorusVertices, 1, 0.35, 32, 32);
-    int VerticesCount = TorusVertices.size();
+    int VerticesCount = TorusVertices.size()/3;
+    std::vector<GLuint> TorusIndices(VerticesCount);
+    std::iota(TorusIndices.begin(), TorusIndices.end(),0);
+
 
     unsigned VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, TorusVertices.size()*4, TorusVertices.data(), GL_STATIC_DRAW);
+    unsigned EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * TorusIndices.size(), TorusIndices.data(), GL_STATIC_DRAW);
 
     //-------------------------------------
     // vertex shader
@@ -102,6 +110,7 @@ int main()
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     Shader torusShader("vs.vert", "fs.frag");
@@ -168,7 +177,8 @@ int main()
             torusShader.setMat4("model", model);
             glBindVertexArray(VAO);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, VerticesCount / 3);
+            glDrawElements(GL_TRIANGLE_STRIP, TorusIndices.size(), GL_UNSIGNED_INT, 0);
+            //glDrawArrays(GL_TRIANGLE_STRIP, 0, VerticesCount);
         }
         else if(RenderMode == 2) {
 
