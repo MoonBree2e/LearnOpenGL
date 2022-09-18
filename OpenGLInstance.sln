@@ -77,6 +77,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshShaderTriangle", "MeshShaderTriangle\MeshShaderTriangle.vcxproj", "{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshShaderTorus", "MeshShaderTorus\MeshShaderTorus.vcxproj", "{162340DA-49B7-4D62-AC37-FC54B55C28CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -381,6 +383,14 @@ Global
 		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Release|x64.Build.0 = Release|x64
 		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Release|x86.ActiveCfg = Release|Win32
 		{3C6FA440-1E7D-4F04-8C0E-02DB6810CC65}.Release|x86.Build.0 = Release|Win32
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Debug|x64.ActiveCfg = Debug|x64
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Debug|x64.Build.0 = Debug|x64
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Debug|x86.ActiveCfg = Debug|Win32
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Debug|x86.Build.0 = Debug|Win32
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Release|x64.ActiveCfg = Release|x64
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Release|x64.Build.0 = Release|x64
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Release|x86.ActiveCfg = Release|Win32
+		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

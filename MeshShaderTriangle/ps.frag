@@ -16,7 +16,7 @@ in PerVertexData
 
 void main()
 {
-  //FragColor = fragIn.color;
-  FragColor = vec4(gl_BaryCoordNV, 1.0);
+  FragColor = fragIn.color;
+//  FragColor = vec4(gl_BaryCoordNV, 1.0);
 }
     

@@ -50,7 +50,7 @@ int main()
 		std::cout << "Failed to initialize OpenGL context" << std::endl;
 		return -1;
 	}
-
+	
 	if (!GLAD_GL_NV_mesh_shader)
 	{
 		std::cout << "GL_NV_mesh_shader not supported!!!" << std::endl;
@@ -112,7 +112,7 @@ int main()
 		glBindVertexArray(vao);
 		glDrawMeshTasksNV(0, 1);
 		glBindVertexArray(0);
-
+		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
