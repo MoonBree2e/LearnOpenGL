@@ -78,5 +78,7 @@
   <ItemGroup>
     <None Include="particle.frag" />
     <None Include="particle.vert" />
+    <None Include="depth.vert" />
+    <None Include="depth.frag" />
   </ItemGroup>
 </Project>

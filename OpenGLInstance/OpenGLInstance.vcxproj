@@ -173,6 +173,8 @@
     <ClInclude Include="..\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="depth.frag" />
+    <None Include="depth.vert" />
     <None Include="particle.frag" />
     <None Include="particle.vert" />
   </ItemGroup>

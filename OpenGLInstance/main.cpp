@@ -13,7 +13,7 @@
 
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-
+#define CLEAR_DEPTH_VALUE -1000000.0f
 
 
 void processInput(GLFWwindow* window);
@@ -69,15 +69,20 @@ int main()
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 #pragma endregion
 
+
     std::vector<float> vertices;
     int sizeXYZ = 20;
     int nParticles = sizeXYZ * sizeXYZ * sizeXYZ;
     glm::dvec3 corner = glm::dvec3(0);
+    const double step = 1.0f / static_cast<float>(sizeXYZ - 1);
+
+    float pointSize = step;
+    float pointScale = 40/step;
     srand(time(0));
     for (int i = 0; i < sizeXYZ; ++i) {
         for (int j = 0; j < sizeXYZ; ++j) {
             for (int k = 0; k < sizeXYZ; ++k) {
-                auto pos = corner + glm::dvec3(i, j, k) * 0.01;
+                auto pos = corner + glm::dvec3(i, j, k) * step;
                 //NumberHelpers::jitter(pos, randomness);
                 auto dirpos = (camera.getViewMatrix() * glm::dvec4(pos, 1.0));
                 vertices.push_back(pos.x);
@@ -86,6 +91,9 @@ int main()
             }
         }
     }
+
+    float densityLowerBound = 1.0f / (8.0f * pow(pointSize, 3.0f)) * 0.001f;
+
     
     unsigned VBO;
     glGenBuffers(1, &VBO);
@@ -99,11 +107,31 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    unsigned int depthFBO;
+    glGenFramebuffers(1, &depthFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
+    unsigned int depthTexture;
+    glGenTextures(1, &depthTexture);
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthTexture, 0);
+    unsigned int RBO;
+    glGenRenderbuffers(1, &RBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
     Shader shaderParticles("particle.vert", "particle.frag");   
+    Shader depthShader("depth.vert", "depth.frag");
 
-    float pointSize = 0.001;
-    float pointScale = 10000;
-
+    bool drawParticles = true;
+    bool drawDepth = true;
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
@@ -117,21 +145,46 @@ int main()
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, .1f, 100.f);
 
-        shaderParticles.use();
-        shaderParticles.setMat4("modelMatrix", model);
-        shaderParticles.setMat4("viewMatrix", view);
-        shaderParticles.setMat4("projectMatrix", projection);
-        //shaderParticles.setVec3("viewPos", camera.Position);
-        shaderParticles.setFloat("pointScale", pointScale);
-        shaderParticles.setFloat("pointSize", pointSize);
-        shaderParticles.setInt("u_nParticles", sizeXYZ * sizeXYZ* sizeXYZ);
-        //shaderParticles.setFloat("time", glfwGetTime());
+        if (drawParticles) {
+            shaderParticles.use();
+            shaderParticles.setMat4("modelMatrix", model);
+            shaderParticles.setMat4("viewMatrix", view);
+            shaderParticles.setMat4("projectMatrix", projection);
+            //shaderParticles.setVec3("viewPos", camera.Position);
+            shaderParticles.setFloat("pointScale", pointScale);
+            shaderParticles.setFloat("pointSize", pointSize);
+            shaderParticles.setInt("u_nParticles", sizeXYZ * sizeXYZ * sizeXYZ);
+            //shaderParticles.setFloat("time", glfwGetTime());
 
-        glBindVertexArray(VAO);
-        //glEnable(GL_POINT_SPRITE);
-        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-        glEnable(GL_DEPTH_TEST);
-        glDrawArrays(GL_POINTS, 0, nParticles);
+            glBindVertexArray(VAO);
+            glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+            glEnable(GL_DEPTH_TEST);
+            glDrawArrays(GL_POINTS, 0, nParticles);
+            shaderParticles.unUse();
+        }
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
+            glClearColor(CLEAR_DEPTH_VALUE, CLEAR_DEPTH_VALUE, CLEAR_DEPTH_VALUE, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            depthShader.use();
+            depthShader.setMat4("modelMatrix", model);
+            depthShader.setMat4("viewMatrix", view);
+            depthShader.setMat4("projectMatrix", projection);
+            depthShader.setFloat("pointScale", pointScale);
+            depthShader.setFloat("pointSize", pointSize);
+            depthShader.setFloat("densityLowerBound", densityLowerBound);
+            glBindVertexArray(VAO);
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+            glDrawArrays(GL_POINTS, 0, nParticles);
+            depthShader.unUse();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+
+
+
+
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -145,6 +198,15 @@ int main()
             ImGui::DragFloat("pointScale", &pointScale, 1000);
             ImGui::DragFloat("pointSize", &pointSize, 0.0005f);
 
+            auto desiredWidth = ImGui::GetContentRegionAvail().x;
+            auto scale = desiredWidth / SCR_WIDTH;
+            auto imageDrawSize = ImVec2(desiredWidth, SCR_HEIGHT * scale);
+            auto drawImage = [&](const char* name, GLuint tex) {
+                ImGui::Text(name);
+                ImGui::Image(reinterpret_cast<ImTextureID>(tex), imageDrawSize, { 0, 1 }, { 1, 0 });
+            };
+            ImGui::Text("aaaa");
+            if(ImGui::CollapsingHeader("depth")) drawImage("depth", depthTexture);
 
             ImGui::End();
         }

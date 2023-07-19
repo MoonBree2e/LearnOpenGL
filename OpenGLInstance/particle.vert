@@ -34,6 +34,5 @@ void main(){
 	eyeSpacePos = (viewMatrix * modelMatrix * vec4(position.xyz, 1.0f)).xyz;
 	f_Color = generateVertexColor();
     gl_PointSize = -pointScale * pointSize / eyeSpacePos.z;
-//	gl_PointSize = 50;
     gl_Position = projectMatrix * viewMatrix * modelMatrix * vec4(position.xyz, 1.0f);
 }
