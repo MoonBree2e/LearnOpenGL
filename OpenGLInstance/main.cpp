@@ -6,25 +6,52 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+#include "camera.h"
+#include "shader.h"
+
+#include <random>
+
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+
+
 void processInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
 int pos = 0;
+
+Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+float cameraSpeedScale = 0.5f;
+
 int main()
 {
+#pragma region BEGIN
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    const char* glsl_version = "#version 130";
+    const char* glsl_version = "#version 430";
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
         glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         return -1;
@@ -40,66 +67,92 @@ int main()
     bool show_demo_window = false;
     bool show_another_window = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+#pragma endregion
 
+    std::vector<float> vertices;
+    int sizeXYZ = 20;
+    int nParticles = sizeXYZ * sizeXYZ * sizeXYZ;
+    glm::dvec3 corner = glm::dvec3(0);
+    srand(time(0));
+    for (int i = 0; i < sizeXYZ; ++i) {
+        for (int j = 0; j < sizeXYZ; ++j) {
+            for (int k = 0; k < sizeXYZ; ++k) {
+                auto pos = corner + glm::dvec3(i, j, k) * 0.01;
+                //NumberHelpers::jitter(pos, randomness);
+                auto dirpos = (camera.getViewMatrix() * glm::dvec4(pos, 1.0));
+                vertices.push_back(pos.x);
+                vertices.push_back(pos.y);
+                vertices.push_back(pos.z);
+            }
+        }
+    }
+    
+    unsigned VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+
+    unsigned VAO;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    Shader shaderParticles("particle.vert", "particle.frag");   
+
+    float pointSize = 1;
+    float pointScale = 10;
 
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
+
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+        glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, .1f, 100.f);
+
+        shaderParticles.use();
+        shaderParticles.setMat4("modelMatrix", model);
+        shaderParticles.setMat4("viewMatrix", view);
+        shaderParticles.setMat4("projectMatrix", projection);
+        //shaderParticles.setVec3("viewPos", camera.Position);
+        shaderParticles.setFloat("pointScale", pointScale);
+        shaderParticles.setFloat("pointSize", pointSize);
+        shaderParticles.setInt("u_nParticles", sizeXYZ * sizeXYZ* sizeXYZ);
+        //shaderParticles.setFloat("time", glfwGetTime());
+
+        glBindVertexArray(VAO);
+        //glEnable(GL_POINT_SPRITE);
+        glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+        glEnable(GL_DEPTH_TEST);
+        glDrawArrays(GL_POINTS, 0, nParticles);
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            if (ImGui::CollapsingHeader("CollapsingHeader"))
-            {
-                ImGui::Text("ABOUT THIS DEMO:");
-            }
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::Text("pos:%d", pos);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
         if (show_another_window)
         {
             ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
+            ImGui::DragFloat("pointScale", &pointScale, 0.5f);
+            ImGui::DragFloat("pointSize", &pointSize, 0.5f);
+
+
             ImGui::End();
         }
 
         // Rendering
         ImGui::Render();
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -109,18 +162,53 @@ int main()
     return 0;
 }
 
+void processInput(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    float currentFrame = static_cast<float>(glfwGetTime());
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+    float t = cameraSpeedScale * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.processKeyboard(FORWARD, t);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.processKeyboard(BACKWARD, t);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.processKeyboard(LEFT, t);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.processKeyboard(RIGHT, t);
+}
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
 
-void processInput(GLFWwindow* window)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
-        pos++;
 
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
+        camera.processMouseMovement(xoffset, yoffset);
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.processMouseScroll(static_cast<float>(yoffset));
 }

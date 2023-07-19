@@ -75,4 +75,8 @@
       <Filter>imgui</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="particle.frag" />
+    <None Include="particle.vert" />
+  </ItemGroup>
 </Project>
