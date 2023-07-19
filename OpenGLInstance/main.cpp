@@ -118,13 +118,13 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backgroundTexture, 0);
 
-    //unsigned int backgroundDepthTexture;
-    //glGenTextures(1, &backgroundDepthTexture);
-    //glBindTexture(GL_TEXTURE_2D, backgroundDepthTexture);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, backgroundDepthTexture, 0);
+    unsigned int backgroundDepthTexture;
+    glGenTextures(1, &backgroundDepthTexture);
+    glBindTexture(GL_TEXTURE_2D, backgroundDepthTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, backgroundDepthTexture, 0);
 
 
     unsigned int backgroundRBO;
@@ -187,10 +187,10 @@ int main()
         processInput(window);
 
         glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
-        glClearColor(0.3f, 0.2f, 0.4f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        //glClear(GL_DEPTH_BUFFER_BIT);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glm::mat4 model = glm::mat4(1.0f);
@@ -277,7 +277,7 @@ int main()
             normalShader.setInt("backgroundTex", tex++);
 
             glActiveTexture(GL_TEXTURE0 + tex);
-            glBindTexture(GL_TEXTURE_2D, backgroundRBO);
+            glBindTexture(GL_TEXTURE_2D, backgroundDepthTexture);
             normalShader.setInt("backgroundDepthTex", tex++);
 
             normalShader.setFloat("pointSize", pointSize);
