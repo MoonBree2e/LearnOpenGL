@@ -107,6 +107,35 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    unsigned int backgroundFBO;
+    glGenFramebuffers(1, &backgroundFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
+    unsigned int backgroundTexture;
+    glGenTextures(1, &backgroundTexture);
+    glBindTexture(GL_TEXTURE_2D, backgroundTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, backgroundTexture, 0);
+
+    //unsigned int backgroundDepthTexture;
+    //glGenTextures(1, &backgroundDepthTexture);
+    //glBindTexture(GL_TEXTURE_2D, backgroundDepthTexture);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, backgroundDepthTexture, 0);
+
+
+    unsigned int backgroundRBO;
+    glGenRenderbuffers(1, &backgroundRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, backgroundRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, backgroundRBO);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     unsigned int depthFBO;
     glGenFramebuffers(1, &depthFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
@@ -149,17 +178,20 @@ int main()
     Shader shaderParticles("particle.vert", "particle.frag");   
     Shader depthShader("depth.vert", "depth.frag");
     Shader thicknessShader("thickness.vert", "thickness.frag");
+    Shader normalShader("quad.vert", "normal.frag");
 
-    bool drawParticles = true;
+    bool drawParticles = false;
     bool drawDepth = true;
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
 
-
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+        glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
+        glClearColor(0.3f, 0.2f, 0.4f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
@@ -228,6 +260,36 @@ int main()
 
             thicknessShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+        {
+            int tex = 0;
+            normalShader.use();
+            glActiveTexture(GL_TEXTURE0 + tex);
+            glBindTexture(GL_TEXTURE_2D, depthTexture);
+            normalShader.setInt("depthTex", tex++);
+
+            glActiveTexture(GL_TEXTURE0 + tex);
+            glBindTexture(GL_TEXTURE_2D, thicknessTexture);
+            normalShader.setInt("thicknessTex", tex++);
+
+            glActiveTexture(GL_TEXTURE0 + tex);
+            glBindTexture(GL_TEXTURE_2D, backgroundTexture);
+            normalShader.setInt("backgroundTex", tex++);
+
+            glActiveTexture(GL_TEXTURE0 + tex);
+            glBindTexture(GL_TEXTURE_2D, backgroundRBO);
+            normalShader.setInt("backgroundDepthTex", tex++);
+
+            normalShader.setFloat("pointSize", pointSize);
+            normalShader.setMat4("viewMatrix", view);
+            normalShader.setMat4("invViewMatrix", glm::inverse(view));
+            normalShader.setMat4("projectMatrix", projection);
+            normalShader.setVec3("liquidColor", glm::vec4(.275f, 0.65f, 0.85f, 0.5f));
+            normalShader.setMat4("invProjectMatrix", glm::inverse(projection));
+            normalShader.setVec3("cameraPos", camera.Position);
+
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
         }
 
 

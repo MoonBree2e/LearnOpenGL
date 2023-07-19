@@ -175,8 +175,10 @@
   <ItemGroup>
     <None Include="depth.frag" />
     <None Include="depth.vert" />
+    <None Include="normal.frag" />
     <None Include="particle.frag" />
     <None Include="particle.vert" />
+    <None Include="quad.vert" />
     <None Include="thickness.frag" />
     <None Include="thickness.vert" />
   </ItemGroup>

@@ -82,5 +82,7 @@
     <None Include="depth.frag" />
     <None Include="thickness.vert" />
     <None Include="thickness.frag" />
+    <None Include="quad.vert" />
+    <None Include="normal.frag" />
   </ItemGroup>
 </Project>
