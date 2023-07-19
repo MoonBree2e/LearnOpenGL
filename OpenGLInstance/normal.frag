@@ -38,22 +38,24 @@ vec3 uvToEye(vec2 coord, float z)
 
 void initLight(){
     dirLight.direction = vec3(0, 1, 0);
-    dirLight.ambient = vec3(0.3f);
-    dirLight.diffuse  = vec3(0.55f);
-    dirLight.specular = vec3(0.15f);
+    dirLight.ambient = vec3(0.05f);
+    dirLight.diffuse  = vec3(0.6f);
+    dirLight.specular = vec3(0.6f);
 }
 
 void main(){	
 	initLight();
 
-//	float backgroundDepth = texture(backgroundDepthTex, Texcoord).r;
+	float backgroundDepth = texture(backgroundDepthTex, Texcoord).r;
 
 	float depth = texture(depthTex, Texcoord).r;
-//	if(depth <= -1.0f || depth >= 1.0f || (depth*0.5f + 0.5f > backgroundDepth))
-//	{
-//		fragColor = texture(backgroundTex, Texcoord);
-//		return;
-//	}
+	if(depth <= -1.0f || depth >= 1.0f 
+	/*|| (depth*0.5f + 0.5f > backgroundDepth)*/
+	)
+	{
+		fragColor = texture(backgroundTex, Texcoord);
+		return;
+	}
 
 	// -----------------reconstruct normal----------------------------
 	vec2 depthTexelSize = 1.0 / textureSize(depthTex, 0);
@@ -77,7 +79,24 @@ void main(){
 	vec3 normal = normalize(cross(dx, dy));
 	vec3 worldPos = (invViewMatrix * vec4(eyeSpacePos, 1.0f)).xyz;
 
-	fragColor.rgb = normal;
+	// -----------------refracted----------------------------
+	vec2 texScale = vec2(0.75, 1.0);		// ???.
+	float refractScale = 1.33 * 0.025;	// index.
+	refractScale *= smoothstep(0.1, 0.4, worldPos.y);
+	vec2 refractCoord = Texcoord + normal.xy * refractScale * texScale;
+	float thickness = max(texture(thicknessTex, Texcoord).r, 0.3f);
+	vec3 transmission = exp(-(vec3(1.0f) - liquidColor.xyz) * thickness);
+	vec3 refractedColor = texture(backgroundTex, refractCoord).xyz * transmission;
+
+	// -----------------Phong lighting----------------------------
+	vec3 viewDir = -normalize(eyeSpacePos);
+	vec3 lightDir = normalize((viewMatrix * vec4(dirLight.direction, 0.0f)).xyz);
+	vec3 halfVec = normalize(viewDir + lightDir);
+	vec3 specular = vec3(dirLight.specular * pow(max(dot(halfVec, normal), 0.0f), 400.0f));
+	vec3 diffuse = liquidColor.xyz * max(dot(lightDir, normal), 0.0f) * dirLight.diffuse * liquidColor.w;
+	
+	// -----------------Merge all effect----------------------------
+	fragColor.rgb = diffuse + specular + refractedColor;
 	fragColor.a = 1.0f;
 
 	// gamma correction.

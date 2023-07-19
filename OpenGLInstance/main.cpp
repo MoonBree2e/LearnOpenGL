@@ -132,6 +132,8 @@ int main()
     glBindRenderbuffer(GL_RENDERBUFFER, backgroundRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, backgroundRBO);
+    GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, attachments);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -284,7 +286,7 @@ int main()
             normalShader.setMat4("viewMatrix", view);
             normalShader.setMat4("invViewMatrix", glm::inverse(view));
             normalShader.setMat4("projectMatrix", projection);
-            normalShader.setVec3("liquidColor", glm::vec4(.275f, 0.65f, 0.85f, 0.5f));
+            normalShader.setVec4("liquidColor", glm::vec4(.275f, 0.65f, 0.85f, 0.5f));
             normalShader.setMat4("invProjectMatrix", glm::inverse(projection));
             normalShader.setVec3("cameraPos", camera.Position);
 
@@ -305,7 +307,7 @@ int main()
         {
             ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::Text("Hello from another window!");
-            ImGui::DragFloat("pointScale", &pointScale, 1000);
+            ImGui::DragFloat("pointScale", &pointScale, 10);
             ImGui::DragFloat("pointSize", &pointSize, 0.0005f);
 
             auto desiredWidth = ImGui::GetContentRegionAvail().x;
