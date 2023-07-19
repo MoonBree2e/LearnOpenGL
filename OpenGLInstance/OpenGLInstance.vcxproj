@@ -177,6 +177,8 @@
     <None Include="depth.vert" />
     <None Include="particle.frag" />
     <None Include="particle.vert" />
+    <None Include="thickness.frag" />
+    <None Include="thickness.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

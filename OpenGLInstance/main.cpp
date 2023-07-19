@@ -11,8 +11,8 @@
 
 #include <random>
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 900;
 #define CLEAR_DEPTH_VALUE -1000000.0f
 
 
@@ -77,7 +77,7 @@ int main()
     const double step = 1.0f / static_cast<float>(sizeXYZ - 1);
 
     float pointSize = step;
-    float pointScale = 40/step;
+    float pointScale = 55/step;
     srand(time(0));
     for (int i = 0; i < sizeXYZ; ++i) {
         for (int j = 0; j < sizeXYZ; ++j) {
@@ -117,11 +117,30 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthTexture, 0);
-    unsigned int RBO;
-    glGenRenderbuffers(1, &RBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+    unsigned int depthRBO;
+    glGenRenderbuffers(1, &depthRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, RBO);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    unsigned int thicknessFBO;
+    glGenFramebuffers(1, &thicknessFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, thicknessFBO);
+    unsigned int thicknessTexture;
+    glGenTextures(1, &thicknessTexture);
+    glBindTexture(GL_TEXTURE_2D, thicknessTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, thicknessTexture, 0);
+    unsigned int thicknessRBO;
+    glGenRenderbuffers(1, &thicknessRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, thicknessRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, thicknessRBO);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -129,6 +148,7 @@ int main()
 
     Shader shaderParticles("particle.vert", "particle.frag");   
     Shader depthShader("depth.vert", "depth.frag");
+    Shader thicknessShader("thickness.vert", "thickness.frag");
 
     bool drawParticles = true;
     bool drawDepth = true;
@@ -181,6 +201,34 @@ int main()
             depthShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, thicknessFBO);
+            glClearColor(0, 0, 0, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            thicknessShader.use();
+            thicknessShader.setMat4("modelMatrix", model);
+            thicknessShader.setMat4("viewMatrix", view);
+            thicknessShader.setMat4("projectMatrix", projection);
+            thicknessShader.setFloat("pointScale", pointScale * 1.5f);
+            thicknessShader.setFloat("pointSize", pointSize);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_ONE, GL_ONE);
+            glDepthMask(GL_FALSE);
+            glEnable(GL_DEPTH_TEST);
+            glDisable(GL_DEPTH_TEST);
+            glEnable(GL_PROGRAM_POINT_SIZE);
+            glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_POINTS, 0, nParticles);
+
+            glDepthMask(GL_TRUE);
+            glDisable(GL_BLEND);
+            glDisable(GL_PROGRAM_POINT_SIZE);
+
+            thicknessShader.unUse();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
 
 
 
@@ -207,6 +255,7 @@ int main()
             };
             ImGui::Text("aaaa");
             if(ImGui::CollapsingHeader("depth")) drawImage("depth", depthTexture);
+            if (ImGui::CollapsingHeader("thickness")) drawImage("thickness", thicknessTexture);
 
             ImGui::End();
         }

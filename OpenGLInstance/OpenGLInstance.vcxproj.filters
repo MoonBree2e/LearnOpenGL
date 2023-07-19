@@ -80,5 +80,7 @@
     <None Include="particle.vert" />
     <None Include="depth.vert" />
     <None Include="depth.frag" />
+    <None Include="thickness.vert" />
+    <None Include="thickness.frag" />
   </ItemGroup>
 </Project>
