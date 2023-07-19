@@ -101,8 +101,8 @@ int main()
 
     Shader shaderParticles("particle.vert", "particle.frag");   
 
-    float pointSize = 1;
-    float pointScale = 10;
+    float pointSize = 0.001;
+    float pointScale = 10000;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -142,8 +142,8 @@ int main()
         {
             ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::Text("Hello from another window!");
-            ImGui::DragFloat("pointScale", &pointScale, 0.5f);
-            ImGui::DragFloat("pointSize", &pointSize, 0.5f);
+            ImGui::DragFloat("pointScale", &pointScale, 1000);
+            ImGui::DragFloat("pointSize", &pointSize, 0.0005f);
 
 
             ImGui::End();
