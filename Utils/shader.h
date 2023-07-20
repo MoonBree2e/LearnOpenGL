@@ -15,6 +15,61 @@
 #undef APIENTRY
 #include <spdlog/spdlog.h>
 
+typedef std::string String;
+
+inline String GLErr2Str(GLenum err)
+{
+    switch (err) {
+    case GL_NO_ERROR:
+        return String("No error.");
+
+    case GL_INVALID_ENUM:
+        return String("Invalid enum.");
+
+    case GL_INVALID_VALUE:
+        return String("Invalid value.");
+
+    case GL_INVALID_OPERATION:
+        return String("Invalid operation.");
+
+    case GL_STACK_OVERFLOW:
+        return String("Stack overflow.");
+
+    case GL_STACK_UNDERFLOW:
+        return String("Stack underflow.");
+
+    case GL_OUT_OF_MEMORY:
+        return String("Out of memory.");
+
+    default:
+        return String("Unknown error.");
+    }
+}
+
+#ifdef _MSC_VER
+#   define DEBUG_BREAK __debugbreak();
+#else
+#   define DEBUG_BREAK ;
+
+#endif
+#ifdef _DEBUG
+#define glCall(a)                                                                          \
+    a;                                                                                     \
+    {                                                                                      \
+        GLenum err = glGetError();                                                         \
+        if (err != GL_NO_ERROR) {                                                          \
+            String str = "GL error when calling '" + String(#a) + "'"                      \
+                                                                  ". OpenGL error: " +     \
+                         GLErr2Str(err) +                                                  \
+                         ", in file: " + __FILE__ + ", line: " + std::to_string(__LINE__); \
+            fprintf(stderr, "%x, %s\n",err, str.c_str());                                          \
+            DEBUG_BREAK                                                                    \
+        }                                                                                  \
+    }
+#else  // NO _DEBUG
+#define glCall(a) a;
+#endif
+
 class Shader
 {
 public:
