@@ -50,7 +50,7 @@ void main(){
 
 	float depth = texture(depthTex, Texcoord).r;
 	if(depth <= -1.0f || depth >= 1.0f 
-	/*|| (depth*0.5f + 0.5f > backgroundDepth)*/
+	|| (depth*0.5f + 0.5f > backgroundDepth)
 	)
 	{
 		fragColor = texture(backgroundTex, Texcoord);

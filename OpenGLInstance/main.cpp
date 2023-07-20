@@ -10,6 +10,7 @@
 #include "shader.h"
 
 #include <random>
+#include "stb_image.h"
 
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 900;
@@ -69,6 +70,54 @@ int main()
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 #pragma endregion
 
+#pragma region plane
+float planeVert[] = {
+        1.f,  0.f, -1.0f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,   // 右上
+        1.f, 0.f, 1.f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,   // 右下
+        -1.f, 0.f, 1.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,   // 左下
+        -1.f,  0.f, -1.0f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f    // 左上
+    };
+    unsigned int indices[] = { // 注意索引从0开始! 
+        0, 1, 3, // 第一个三角形
+        1, 2, 3  // 第二个三角形
+    };
+    // ---------load texture---------
+    int width1, height1, nrChannels1;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    unsigned char* data1 = stbi_load("../Assets/container.jpg", &width1, &height1, &nrChannels1, 0);
+    unsigned int planeTexture;
+    glGenTextures(1, &planeTexture);
+    glBindTexture(GL_TEXTURE_2D, planeTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width1, height1, 0, GL_RGB, GL_UNSIGNED_BYTE, data1);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    unsigned int planeVAO, planeVBO, planeEBO;
+    glGenVertexArrays(1, &planeVAO);
+    glGenBuffers(1, &planeVBO);
+    glGenBuffers(1, &planeEBO);
+
+    glBindVertexArray(planeVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVert), planeVert, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, planeEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    stbi_image_free(data1);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+#pragma endregion
+
 
     std::vector<float> vertices;
     int sizeXYZ = 20;
@@ -77,7 +126,7 @@ int main()
     const double step = 1.0f / static_cast<float>(sizeXYZ - 1);
 
     float pointSize = step;
-    float pointScale = 55/step;
+    float pointScale = 100/step;
     srand(time(0));
     for (int i = 0; i < sizeXYZ; ++i) {
         for (int j = 0; j < sizeXYZ; ++j) {
@@ -176,7 +225,7 @@ int main()
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
+    Shader planeShader("plane.vert", "plane.frag");
     Shader shaderParticles("particle.vert", "particle.frag");   
     Shader depthShader("depth.vert", "depth.frag");
     Shader thicknessShader("thickness.vert", "thickness.frag");
@@ -188,17 +237,49 @@ int main()
     {
         processInput(window);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        //glClear(GL_DEPTH_BUFFER_BIT);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, .1f, 100.f);
+        
+        // --------- background --------
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            model = glm::translate(model, glm::vec3(0,-1,0));
+            model = glm::scale(model, glm::vec3(2, 1, 1));
+            planeShader.use();
+            planeShader.setMat4("modelMatrix", model);
+            planeShader.setMat4("viewMatrix", view);
+            planeShader.setMat4("projectMatrix", projection);
+            planeShader.setInt("tex", 0);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, planeTexture);
+            glBindVertexArray(planeVAO);
+            glEnable(GL_DEPTH_TEST);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0, 0, -1));
+            model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
+            model = glm::scale(model, glm::vec3(2, 1, 1));
+            planeShader.setMat4("modelMatrix", model);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(-2, 0, 0));
+            model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 1.0, 0.0));
+            model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
+            planeShader.setMat4("modelMatrix", model);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+            planeShader.unUse();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        }
+#if 1
         if (drawParticles) {
             shaderParticles.use();
             shaderParticles.setMat4("modelMatrix", model);
@@ -216,6 +297,7 @@ int main()
             glDrawArrays(GL_POINTS, 0, nParticles);
             shaderParticles.unUse();
         }
+        // --------- fluid depth ---------
         {
             glBindFramebuffer(GL_FRAMEBUFFER, depthFBO);
             glClearColor(CLEAR_DEPTH_VALUE, CLEAR_DEPTH_VALUE, CLEAR_DEPTH_VALUE, 1.0f);
@@ -235,6 +317,7 @@ int main()
             depthShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+        // --------- fluid thickness ---------
         {
             glBindFramebuffer(GL_FRAMEBUFFER, thicknessFBO);
             glClearColor(0, 0, 0, 1.0f);
@@ -244,7 +327,7 @@ int main()
             thicknessShader.setMat4("modelMatrix", model);
             thicknessShader.setMat4("viewMatrix", view);
             thicknessShader.setMat4("projectMatrix", projection);
-            thicknessShader.setFloat("pointScale", pointScale * 1.5f);
+            thicknessShader.setFloat("pointScale", pointScale * 2.f);
             thicknessShader.setFloat("pointSize", pointSize);
             glEnable(GL_BLEND);
             glBlendFunc(GL_ONE, GL_ONE);
@@ -263,6 +346,7 @@ int main()
             thicknessShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+        // --------- fluid normal and rendering ---------
         {
             int tex = 0;
             normalShader.use();
@@ -293,8 +377,7 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
         }
-
-
+#endif
 
 
 

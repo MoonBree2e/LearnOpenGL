@@ -158,6 +158,7 @@
     <ClCompile Include="..\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\Utils\stb_image.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
@@ -178,6 +179,8 @@
     <None Include="normal.frag" />
     <None Include="particle.frag" />
     <None Include="particle.vert" />
+    <None Include="plane.frag" />
+    <None Include="plane.vert" />
     <None Include="quad.vert" />
     <None Include="thickness.frag" />
     <None Include="thickness.vert" />
