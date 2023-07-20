@@ -15,6 +15,7 @@ void main(){
 	vec4 pixelEyePos = vec4(eyeSpacePos + normal * pointSize, 1.0f);
 	vec4 pixelClipPos = projectMatrix * pixelEyePos;
 	float ndcZ = pixelClipPos.z / pixelClipPos.w;
+	//fragDepth = pixelEyePos.z;
 	fragDepth = ndcZ;
 	gl_FragDepth = ndcZ;
 }

@@ -16,14 +16,14 @@
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 900;
 #define CLEAR_DEPTH_VALUE -1000000.0f
-
+#define USE_LON_LAT
 
 
 void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void transferAndUpdateVertexLocation(std::vector<double> vVertices, GLuint VAO, GLuint vStride, GLuint vOffset);
+void transferAndUpdateVertexLocation(std::vector<double> vVertices, GLuint vBuffer, GLuint vStride, GLuint vOffset, const glm::dmat4& vModel);
 
 int pos = 0;
 
@@ -43,7 +43,9 @@ int main()
     glm::dvec3 GlobalPosition;
     g_coord.LongLat2GlobalCoord(120.8334936651, 24.68150604065281, 0.5195652637630701, GlobalPosition);
     glm::dvec3 earthPos = glm::vec3(GlobalPosition);
+#ifndef USE_LON_LAT
     earthPos = glm::dvec3(0);
+#endif
     camera = Camera(glm::dvec3(0.0f, 0.0f, 5.0f) + earthPos);
 
 #pragma region BEGIN
@@ -82,6 +84,14 @@ int main()
 #pragma endregion
 
 #pragma region plane
+#ifdef USE_LON_LAT
+    std::vector<double> PlaneVert = {
+        1.f,  0.f, -1.0f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,   // 右上
+        1.f, 0.f, 1.f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,   // 右下
+        -1.f, 0.f, 1.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f,   // 左下
+        -1.f,  0.f, -1.0f,   1.0f, 1.0f, 1.0f,   0.0f, 1.0f    // 左上
+    };
+#endif
 float planeVert[] = {
         1.f,  0.f, -1.0f,   1.0f, 1.0f, 1.0f,   1.0f, 1.0f,   // 右上
         1.f, 0.f, 1.f,   1.0f, 1.0f, 1.0f,   1.0f, 0.0f,   // 右下
@@ -129,8 +139,11 @@ float planeVert[] = {
     glCall(glBindVertexArray(0));
 #pragma endregion
 
-
+#ifdef USE_LON_LAT
+    std::vector<double> vertices;
+#else
     std::vector<float> vertices;
+#endif
     int sizeXYZ = 20;
     int nParticles = sizeXYZ * sizeXYZ * sizeXYZ;
     glm::dvec3 corner = glm::dvec3(0) + glm::dvec3(earthPos);
@@ -144,7 +157,7 @@ float planeVert[] = {
             for (int k = 0; k < sizeXYZ; ++k) {
                 auto pos = corner + glm::dvec3(i, j, k) * step;
                 //NumberHelpers::jitter(pos, randomness);
-                auto dirpos = (camera.getViewMatrix() * glm::dvec4(pos, 1.0));
+                //auto dirpos = (camera.getViewMatrix() * glm::dvec4(pos, 1.0));
                 vertices.push_back(pos.x);
                 vertices.push_back(pos.y);
                 vertices.push_back(pos.z);
@@ -158,7 +171,11 @@ float planeVert[] = {
     unsigned VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+#ifndef USE_LON_LAT
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+#else
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), nullptr, GL_DYNAMIC_DRAW);
+#endif
 
     unsigned VAO;
     glGenVertexArrays(1, &VAO);
@@ -286,8 +303,13 @@ float planeVert[] = {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glm::dmat4 Model = glm::dmat4(1.0f);
         glm::mat4 model = glm::mat4(1.0f);
+#ifdef USE_LON_LAT
+        glm::mat4 view = glm::mat4(1.0f);
+#else
         glm::mat4 view = camera.getViewMatrix();
+#endif
         glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (double)SCR_WIDTH / (double)SCR_HEIGHT, .1, 100.);
         
         // --------- background --------
@@ -295,12 +317,17 @@ float planeVert[] = {
             glCall(glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO));
             glCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            model = glm::translate((glm::dmat4)model, earthPos);
-            model = glm::translate(model, glm::vec3(0,-1,0));
-            model = glm::scale(model, glm::vec3(2, 1, 1));
+            Model = glm::translate((glm::dmat4)Model, earthPos);
+            Model = glm::translate(Model, glm::dvec3(0,-1,0));
+            Model = glm::scale(Model, glm::dvec3(2, 1, 1));
+#ifndef USE_LON_LAT
+            model = Model;
+#else
+            transferAndUpdateVertexLocation(PlaneVert, planeVBO, 8, 0, Model);
+#endif
             planeShader.use();
             planeShader.setMat4("modelMatrix", model);
-            planeShader.setMat4("viewMatrix", view);
+            planeShader.setMat4("viewMatrix", view); 
             planeShader.setMat4("projectMatrix", projection);
             planeShader.setInt("tex", 0);
             glActiveTexture(GL_TEXTURE0);
@@ -309,25 +336,44 @@ float planeVert[] = {
             glEnable(GL_DEPTH_TEST);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-            model = glm::mat4(1.0f);
-            model = glm::translate((glm::dmat4)model, earthPos);
-            model = glm::translate(model, glm::vec3(0, 0, -1));
-            model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
-            model = glm::scale(model, glm::vec3(2, 1, 1));
+            Model = glm::dmat4(1.0f);
+            Model = glm::translate(Model, earthPos);
+            Model = glm::translate(Model, glm::dvec3(0, 0, -1));
+            Model = glm::rotate(Model, glm::radians(90.0), glm::dvec3(1.0, 0.0, 0.0));
+            Model = glm::scale(Model, glm::dvec3(2, 1, 1));
+#ifndef USE_LON_LAT
+            model = Model;
+#else
+            transferAndUpdateVertexLocation(PlaneVert, planeVBO, 8, 0, Model);
+            glBindVertexArray(planeVAO);
+#endif
             planeShader.setMat4("modelMatrix", model);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-            model = glm::mat4(1.0f);
-            model = glm::translate((glm::dmat4)model, earthPos);
-            model = glm::translate(model, glm::vec3(-2, 0, 0));
-            model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 1.0, 0.0));
-            model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
+            Model = glm::dmat4(1.0f);
+            Model = glm::translate(Model, earthPos);
+            Model = glm::translate(Model, glm::dvec3(-2, 0, 0));
+            Model = glm::rotate(Model, glm::radians(90.0), glm::dvec3(0.0, 1.0, 0.0));
+            Model = glm::rotate(Model, glm::radians(90.0), glm::dvec3(1.0, 0.0, 0.0));
+#ifndef USE_LON_LAT
+            model = Model;
+#else
+            transferAndUpdateVertexLocation(PlaneVert, planeVBO, 8, 0, Model);
+            glBindVertexArray(planeVAO);
+#endif
             planeShader.setMat4("modelMatrix", model);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             planeShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+
+#ifdef USE_LON_LAT
+        Model = glm::dmat4(1.0);
+        Model = glm::translate(Model, glm::dvec3(-2, -1, -1));
+        transferAndUpdateVertexLocation(vertices, VBO, 3, 0, Model);
+        model = glm::mat4(1.0f);
+#endif
         // --------- draw particles ---------
         if (drawParticles) {
             shaderParticles.use();
@@ -418,7 +464,7 @@ float planeVert[] = {
             glCall(depthGaussianBlurShader.setInt("image", 0));
 
             //glCall(glReadBuffer(GL_DEPTH_ATTACHMENT));
-            for (unsigned int index = 0; index < 5; ++index) {
+            for (unsigned int index = 0; index < 30; ++index) {
                 // horizontal blur.
                 depthGaussianBlurShader.setInt("horizontal", 1);
                 glCall(glDrawArrays(GL_TRIANGLES, 0, 6));
@@ -559,7 +605,23 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     camera.processMouseScroll(static_cast<float>(yoffset));
 }
 
-void transferAndUpdateVertexLocation(std::vector<double> vVertices, GLuint VAO, GLuint vStride, GLuint vOffset)
+void transferAndUpdateVertexLocation(std::vector<double> vVertices, GLuint vBuffer, GLuint vStride, GLuint vOffset, const glm::dmat4& vModel)
 {
-    camera.getViewMatrix();
+    glCall(glBindVertexArray(0));
+    std::vector<float> Result(vVertices.size());
+
+    glm::dmat4 View = camera.getViewMatrixDouble();
+
+    for (size_t i = 0; i < vVertices.size(); i += vStride)
+    {
+        for (int k = 0; k < vStride; ++k) { Result[i + k] = vVertices[i + k]; }
+        glm::dvec4 Pos(vVertices[i + vOffset], vVertices[i + vOffset + 1], vVertices[i + vOffset + 2], 1.0);
+        auto PosCS = View * vModel * Pos;
+        Result[i + vOffset] = PosCS.x / PosCS.w;
+        Result[i + vOffset + 1] = PosCS.y / PosCS.w;
+        Result[i + vOffset + 2] = PosCS.z / PosCS.w;
+    }
+
+    glCall(glBindBuffer(GL_ARRAY_BUFFER, vBuffer));
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * Result.size(), Result.data());
 }
