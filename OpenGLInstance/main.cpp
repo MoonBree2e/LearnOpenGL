@@ -12,10 +12,11 @@
 #include <random>
 #include "stb_image.h"
 #include "Coordination.h"
-
+#include <string>
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 900;
 #define CLEAR_DEPTH_VALUE -1000000.0f
+
 
 
 void processInput(GLFWwindow* window);
@@ -25,7 +26,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int pos = 0;
 
-
+#define GAUSSIAN_BLUR 1
 
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 float lastX = SCR_WIDTH / 2.0f;
@@ -95,36 +96,36 @@ float planeVert[] = {
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
     unsigned char* data1 = stbi_load("../Assets/container.jpg", &width1, &height1, &nrChannels1, 0);
     unsigned int planeTexture;
-    glGenTextures(1, &planeTexture);
-    glBindTexture(GL_TEXTURE_2D, planeTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width1, height1, 0, GL_RGB, GL_UNSIGNED_BYTE, data1);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    glCall(glGenTextures(1, &planeTexture));
+    glCall(glBindTexture(GL_TEXTURE_2D, planeTexture));
+    glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT));
+    glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT));
+    glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+    glCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width1, height1, 0, GL_RGB, GL_UNSIGNED_BYTE, data1));
+    glCall(glGenerateMipmap(GL_TEXTURE_2D));
 
     unsigned int planeVAO, planeVBO, planeEBO;
-    glGenVertexArrays(1, &planeVAO);
-    glGenBuffers(1, &planeVBO);
-    glGenBuffers(1, &planeEBO);
+    glCall(glGenVertexArrays(1, &planeVAO));
+    glCall(glGenBuffers(1, &planeVBO));
+    glCall(glGenBuffers(1, &planeEBO));
 
-    glBindVertexArray(planeVAO);
+    glCall(glBindVertexArray(planeVAO));
 
-    glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(planeVert), planeVert, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, planeEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glCall(glBindBuffer(GL_ARRAY_BUFFER, planeVBO));
+    glCall(glBufferData(GL_ARRAY_BUFFER, sizeof(planeVert), planeVert, GL_STATIC_DRAW));
+    glCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, planeEBO));
+    glCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
     stbi_image_free(data1);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    glCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0));
+    glCall(glEnableVertexAttribArray(0));
+    glCall(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))));
+    glCall(glEnableVertexAttribArray(1));
+    glCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
+    glCall(glEnableVertexAttribArray(2));
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    glCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    glCall(glBindVertexArray(0));
 #pragma endregion
 
 
@@ -234,11 +235,46 @@ float planeVert[] = {
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    unsigned int depthGaussianBlurFBO;
+    glGenFramebuffers(1, &depthGaussianBlurFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthGaussianBlurFBO);
+
+    unsigned int depthGaussianBlurTarget;
+    glGenTextures(1, &depthGaussianBlurTarget);
+    glBindTexture(GL_TEXTURE_2D, depthGaussianBlurTarget);
+    glCall(glObjectLabel(GL_TEXTURE, depthGaussianBlurTarget, -1, "depthGaussianBlurTarget"));
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthGaussianBlurTarget, 0);
+    //glDrawBuffer(GL_NONE);
+    //glReadBuffer(GL_NONE);
+  
+    unsigned int depthGaussianBlur;
+    glGenTextures(1, &depthGaussianBlur);
+    glBindTexture(GL_TEXTURE_2D, depthGaussianBlur);
+    glCall(glObjectLabel(GL_TEXTURE, depthGaussianBlur, -1, "depthGaussianBlur"));
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    //glBindRenderbuffer(GL_RENDERBUFFER, depthGaussianBlur);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthGaussianBlur, 0);    
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     Shader planeShader("plane.vert", "plane.frag");
     Shader shaderParticles("particle.vert", "particle.frag");   
     Shader depthShader("depth.vert", "depth.frag");
     Shader thicknessShader("thickness.vert", "thickness.frag");
     Shader normalShader("quad.vert", "normal.frag");
+    Shader depthGaussianBlurShader("quad.vert", "depthGaussianBlur.frag");
 
     bool drawParticles = false;
     bool drawDepth = true;
@@ -255,8 +291,8 @@ float planeVert[] = {
         
         // --------- background --------
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glCall(glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO));
+            glCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             model = glm::translate(model, earthPos);
             model = glm::translate(model, glm::vec3(0,-1,0));
@@ -291,7 +327,7 @@ float planeVert[] = {
             planeShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
-#if 1
+        // --------- draw particles ---------
         if (drawParticles) {
             shaderParticles.use();
             shaderParticles.setMat4("modelMatrix", model);
@@ -358,12 +394,53 @@ float planeVert[] = {
             thicknessShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+        // --------- depth texture filter ---------
+        {
+            glCall(glBindFramebuffer(GL_FRAMEBUFFER, depthGaussianBlurFBO));
+            glCall(glClearColor(0, 0, 0, 1.0f));
+            glCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+            glCall(glBindFramebuffer(GL_FRAMEBUFFER, depthFBO));
+            glCall(glActiveTexture(GL_TEXTURE0));
+            glCall(glBindTexture(GL_TEXTURE_2D, depthGaussianBlurTarget));
+            glCall(glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, SCR_WIDTH, SCR_HEIGHT));
+            glCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+
+            glCall(glBindFramebuffer(GL_FRAMEBUFFER, depthGaussianBlurFBO));
+            glCall(glDepthMask(GL_TRUE));
+            glCall(glEnable(GL_DEPTH_TEST));
+
+            depthGaussianBlurShader.use();
+
+            glCall(glActiveTexture(GL_TEXTURE0));
+            glCall(glBindTexture(GL_TEXTURE_2D, depthGaussianBlurTarget));
+            glCall(depthGaussianBlurShader.setInt("image", 0));
+
+            //glCall(glReadBuffer(GL_DEPTH_ATTACHMENT));
+            for (unsigned int index = 0; index < 5; ++index) {
+                // horizontal blur.
+                depthGaussianBlurShader.setInt("horizontal", 1);
+                glCall(glDrawArrays(GL_TRIANGLES, 0, 6));
+
+                // copy to target texture.
+                glCall(glCopyImageSubData(depthGaussianBlur, GL_TEXTURE_2D, 0, 0, 0, 0, depthGaussianBlurTarget, GL_TEXTURE_2D, 0, 0, 0, 0, SCR_WIDTH, SCR_HEIGHT, 1));
+
+                // vertical blur.
+                depthGaussianBlurShader.setInt("horizontal", 0);
+                glCall(glDrawArrays(GL_TRIANGLES, 0, 6));
+
+                // copy to target texture.
+                glCall(glCopyImageSubData(depthGaussianBlur, GL_TEXTURE_2D, 0, 0, 0, 0, depthGaussianBlurTarget, GL_TEXTURE_2D, 0, 0, 0, 0, SCR_WIDTH, SCR_HEIGHT, 1));
+            }
+            depthGaussianBlurShader.unUse();
+            glCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        }
         // --------- fluid normal and rendering ---------
         {
             int tex = 0;
             normalShader.use();
             glActiveTexture(GL_TEXTURE0 + tex);
-            glBindTexture(GL_TEXTURE_2D, depthTexture);
+            glBindTexture(GL_TEXTURE_2D, depthGaussianBlurTarget);
             normalShader.setInt("depthTex", tex++);
 
             glActiveTexture(GL_TEXTURE0 + tex);
@@ -386,12 +463,9 @@ float planeVert[] = {
             normalShader.setMat4("invProjectMatrix", glm::inverse(projection));
             normalShader.setVec3("cameraPos", camera.Position);
 
-            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glCall(glDrawArrays(GL_TRIANGLES, 0, 6));
 
         }
-#endif
-
-
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -413,9 +487,11 @@ float planeVert[] = {
                 ImGui::Image(reinterpret_cast<ImTextureID>(tex), imageDrawSize, { 0, 1 }, { 1, 0 });
             };
             ImGui::Text("aaaa");
-            if(ImGui::CollapsingHeader("depth")) drawImage("depth", depthTexture);
+            if (ImGui::CollapsingHeader("depth")) drawImage("depth", depthTexture);
             if (ImGui::CollapsingHeader("thickness")) drawImage("thickness", thicknessTexture);
-
+#if 1 
+            if (ImGui::CollapsingHeader("depthGaussian")) drawImage("depthGaussian", depthGaussianBlurTarget);
+#endif
             ImGui::End();
         }
 
@@ -455,7 +531,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }
-
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
