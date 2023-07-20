@@ -22,10 +22,9 @@ void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void transferAndUpdateVertexLocation(std::vector<double> vVertices, GLuint VAO, GLuint vStride, GLuint vOffset);
 
 int pos = 0;
-
-
 
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 float lastX = SCR_WIDTH / 2.0f;
@@ -40,9 +39,9 @@ int main()
 {
     glm::dvec3 GlobalPosition;
     g_coord.LongLat2GlobalCoord(120.8334936651, 24.68150604065281, 0.5195652637630701, GlobalPosition);
-    glm::vec3 earthPos = glm::vec3(GlobalPosition);
-    earthPos = glm::vec3(0);
-    camera = Camera(glm::vec3(0.0f, 0.0f, 5.0f) + earthPos);
+    glm::dvec3 earthPos = glm::vec3(GlobalPosition);
+    earthPos = glm::dvec3(0);
+    camera = Camera(glm::dvec3(0.0f, 0.0f, 5.0f) + earthPos);
 
 #pragma region BEGIN
     glfwInit();
@@ -131,7 +130,7 @@ float planeVert[] = {
     std::vector<float> vertices;
     int sizeXYZ = 20;
     int nParticles = sizeXYZ * sizeXYZ * sizeXYZ;
-    glm::dvec3 corner = glm::dvec3(0) /*+ glm::dvec3(earthPos)*/;
+    glm::dvec3 corner = glm::dvec3(0) + glm::dvec3(earthPos);
     const double step = 1.0f / static_cast<float>(sizeXYZ - 1);
 
     float pointSize = step;
@@ -251,14 +250,14 @@ float planeVert[] = {
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, .1f, 100.f);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Fov), (double)SCR_WIDTH / (double)SCR_HEIGHT, .1, 100.);
         
         // --------- background --------
         {
             glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            model = glm::translate(model, earthPos);
+            model = glm::translate((glm::dmat4)model, earthPos);
             model = glm::translate(model, glm::vec3(0,-1,0));
             model = glm::scale(model, glm::vec3(2, 1, 1));
             planeShader.use();
@@ -273,7 +272,7 @@ float planeVert[] = {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             model = glm::mat4(1.0f);
-            model = glm::translate(model, earthPos);
+            model = glm::translate((glm::dmat4)model, earthPos);
             model = glm::translate(model, glm::vec3(0, 0, -1));
             model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
             model = glm::scale(model, glm::vec3(2, 1, 1));
@@ -281,7 +280,7 @@ float planeVert[] = {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             model = glm::mat4(1.0f);
-            model = glm::translate(model, earthPos);
+            model = glm::translate((glm::dmat4)model, earthPos);
             model = glm::translate(model, glm::vec3(-2, 0, 0));
             model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 1.0, 0.0));
             model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
@@ -291,6 +290,8 @@ float planeVert[] = {
             planeShader.unUse();
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
         }
+
+        //model = glm::mat4(1.0f);
 #if 1
         if (drawParticles) {
             shaderParticles.use();
@@ -481,4 +482,9 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.processMouseScroll(static_cast<float>(yoffset));
+}
+
+void transferAndUpdateVertexLocation(std::vector<double> vVertices, GLuint VAO, GLuint vStride, GLuint vOffset)
+{
+    camera.getViewMatrix();
 }

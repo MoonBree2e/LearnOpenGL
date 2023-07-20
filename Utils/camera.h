@@ -15,37 +15,37 @@ enum CameraMoveDirection {
     RIGHT
 };
 
-const float YAW = -90.f;
-const float PITCH = 0.f;
-const float CAMERASPEED = 5.5f;
-const float SENSITIVITY = 0.1f;
-const float FOV = 45.f;
+const double YAW = -90.f;
+const double PITCH = 0.f;
+const double CAMERASPEED = 5.5f;
+const double SENSITIVITY = 0.1f;
+const double FOV = 45.f;
 
 class Camera {
 public:
-    glm::vec3 Position;
-    glm::vec3 Front;
-    glm::vec3 Up;
-    glm::vec3 Right;
-    glm::vec3 WorldUp;
+    glm::dvec3 Position;
+    glm::dvec3 Front;
+    glm::dvec3 Up;
+    glm::dvec3 Right;
+    glm::dvec3 WorldUp;
 
-    float Yaw;
-    float Pitch;
+    double Yaw;
+    double Pitch;
 
-    float MovementSpeed;
-    float MouseSensitivity;
-    float Fov;
+    double MovementSpeed;
+    double MouseSensitivity;
+    double Fov;
 
-    float ZNear = 0.1f;
-    float ZFar = 50.0f;
-    Camera(glm::vec3 pos = glm::vec3(0.f, 0.f, 0.f), glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float yaw = YAW, float pitch = PITCH) :
-        Front(glm::vec3(0.f, 0.f, -1.f)), Position(pos), WorldUp(up),
+    double ZNear = 0.1f;
+    double ZFar = 50.0f;
+    Camera(glm::dvec3 pos = glm::dvec3(0.f, 0.f, 0.f), glm::dvec3 up = glm::dvec3(0.f, 1.f, 0.f), double yaw = YAW, double pitch = PITCH) :
+        Front(glm::dvec3(0.f, 0.f, -1.f)), Position(pos), WorldUp(up),
         Yaw(yaw), Pitch(pitch), MovementSpeed(CAMERASPEED), MouseSensitivity(SENSITIVITY), Fov(FOV)
     {
         __updateCameraVectors();
     }
-    Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) :
-        Front(glm::vec3(0.f, 0.f, -1.f)), Position(glm::vec3(posX, posY, posZ)), WorldUp(glm::vec3(upX, upY, upZ)),
+    Camera(double posX, double posY, double posZ, double upX, double upY, double upZ, double yaw, double pitch) :
+        Front(glm::dvec3(0.f, 0.f, -1.f)), Position(glm::dvec3(posX, posY, posZ)), WorldUp(glm::dvec3(upX, upY, upZ)),
         Yaw(yaw), Pitch(pitch), MovementSpeed(CAMERASPEED), MouseSensitivity(SENSITIVITY), Fov(FOV)
     {
         __updateCameraVectors();
@@ -55,25 +55,30 @@ public:
         return glm::lookAt(Position, Position + Front, Up);
     }
 
+    glm::dmat4 getViewMatrixDouble() const
+    {
+        return glm::lookAt(Position, Position + Front, Up);
+    }
+
     glm::mat4 getProjectionMatrix(uint32_t vWidth, uint32_t vHeight) const {
-        return glm::perspective(glm::radians(Fov), static_cast<float>(vWidth) / vHeight, ZNear, ZFar);
+        return glm::perspective(glm::radians(Fov), static_cast<double>(vWidth) / vHeight, ZNear, ZFar);
     }
 
     glm::mat4 getProjectViewMatrix(uint32_t vWidth, uint32_t vHeight) const {
         return getProjectionMatrix(vWidth, vHeight) * getViewMatrix();
     }
 
-    void setSensitivity(float f)
+    void setSensitivity(double f)
     {
         MouseSensitivity = f;
     }
-    void setMoveSpeed(float f)
+    void setMoveSpeed(double f)
     {
         MovementSpeed = f;
     }
 
-    void processKeyboard(CameraMoveDirection vDirection, float vDeltaTime) {
-        float Velocity = MovementSpeed * vDeltaTime;
+    void processKeyboard(CameraMoveDirection vDirection, double vDeltaTime) {
+        double Velocity = MovementSpeed * vDeltaTime;
         switch (vDirection)
         {
         case FORWARD:
@@ -89,7 +94,7 @@ public:
         }
     }
 
-    void processMouseMovement(float vXoffset, float vYoffset, GLboolean constrainPitch = true)
+    void processMouseMovement(double vXoffset, double vYoffset, GLboolean constrainPitch = true)
     {
         vXoffset *= MouseSensitivity;
         vYoffset *= MouseSensitivity;
@@ -105,9 +110,9 @@ public:
         __updateCameraVectors();
     }
 
-    void processMouseScroll(float vYoffset)
+    void processMouseScroll(double vYoffset)
     {
-        Fov -= (float)vYoffset;
+        Fov -= (double)vYoffset;
         if (Fov < 1.f) Fov = 1.f;
         if (Fov > 55.f) Fov = 55.f;
     }
@@ -125,7 +130,7 @@ public:
 
 private:
     void __updateCameraVectors() {
-        glm::vec3 front;
+        glm::dvec3 front;
         front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
         front.y = sin(glm::radians(Pitch));
         front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
