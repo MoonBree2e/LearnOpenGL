@@ -25,6 +25,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int pos = 0;
 
+
+
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
@@ -36,6 +38,12 @@ float cameraSpeedScale = 0.5f;
 
 int main()
 {
+    glm::dvec3 GlobalPosition;
+    g_coord.LongLat2GlobalCoord(120.8334936651, 24.68150604065281, 0.5195652637630701, GlobalPosition);
+    glm::vec3 earthPos = glm::vec3(GlobalPosition);
+    earthPos = glm::vec3(0);
+    camera = Camera(glm::vec3(0.0f, 0.0f, 5.0f) + earthPos);
+
 #pragma region BEGIN
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -123,7 +131,7 @@ float planeVert[] = {
     std::vector<float> vertices;
     int sizeXYZ = 20;
     int nParticles = sizeXYZ * sizeXYZ * sizeXYZ;
-    glm::dvec3 corner = glm::dvec3(0);
+    glm::dvec3 corner = glm::dvec3(0) /*+ glm::dvec3(earthPos)*/;
     const double step = 1.0f / static_cast<float>(sizeXYZ - 1);
 
     float pointSize = step;
@@ -250,6 +258,7 @@ float planeVert[] = {
             glBindFramebuffer(GL_FRAMEBUFFER, backgroundFBO);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            model = glm::translate(model, earthPos);
             model = glm::translate(model, glm::vec3(0,-1,0));
             model = glm::scale(model, glm::vec3(2, 1, 1));
             planeShader.use();
@@ -264,6 +273,7 @@ float planeVert[] = {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             model = glm::mat4(1.0f);
+            model = glm::translate(model, earthPos);
             model = glm::translate(model, glm::vec3(0, 0, -1));
             model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
             model = glm::scale(model, glm::vec3(2, 1, 1));
@@ -271,6 +281,7 @@ float planeVert[] = {
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             model = glm::mat4(1.0f);
+            model = glm::translate(model, earthPos);
             model = glm::translate(model, glm::vec3(-2, 0, 0));
             model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0, 1.0, 0.0));
             model = glm::rotate(model, glm::radians(90.0f), glm::vec3(1.0, 0.0, 0.0));
