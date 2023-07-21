@@ -17,24 +17,23 @@
 class FluidParticle
 {
 public:
-	FluidParticle(std::string vPath = "D:/RenderData/");
+	FluidParticle(std::filesystem::path path, glm::dmat4& model, glm::dmat4& view, glm::dvec3 &T);
 	~FluidParticle();
-	std::vector<double>& getVerticesVec(int index) { return vertices[index]; }
-	int getVerticesNum(int index) { return vertices_num[index]; }
-	int getFrameNum() { return vertices.size(); }
-	void setTranslate(glm::dvec3 T) { translate = T; }
 
-	void bindFrameData(int index);
+	FluidParticle* loadVertices(std::filesystem::path file);
+	void bind() { glCall(glBindVertexArray(VAO)); }
 
-	unsigned VBO;
-	unsigned VAO;
-protected:
-	void loadParticleData(std::filesystem::path path);
-	void loadVertices(std::filesystem::path file);
+	int getVerticesNum(int index) { return vertices.size(); }
+	void setTranslate(glm::dvec3 &T) { translate = T; }
+	GLuint getVBOId() { return VBO; }
+	
+	void preMultiView(glm::dmat4& model, glm::dmat4& view);
+
 private:
-	std::vector<std::vector<double>> vertices;
+	std::vector<double> vertices;
 	glm::dvec3 translate;
-	std::vector<int> vertices_num;
 
+	GLuint VBO;
+	GLuint VAO;
 };
 

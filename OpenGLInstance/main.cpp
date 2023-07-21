@@ -16,7 +16,7 @@
 #include "shader.h"
 
 #include "Coordination.h"
-#include "FluidParticle.h"
+#include "FluidParticleManager.h"
 
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 900;
@@ -146,8 +146,15 @@ float planeVert[] = {
     int nParticles = sizeXYZ * sizeXYZ * sizeXYZ;
     glm::dvec3 corner = glm::dvec3(0) + glm::dvec3(earthPos);
     const double step = 1.0f / static_cast<float>(sizeXYZ - 1);
-
-    FluidParticle fluidParticles;
+    
+    auto m = glm::dmat4(1.0f);
+    m = glm::translate(m, earthPos);
+    m = glm::translate(m, glm::dvec3(-2, 0, 0));
+    m = glm::rotate(m, glm::radians(90.0), glm::dvec3(0.0, 1.0, 0.0));
+    m = glm::rotate(m, glm::radians(90.0), glm::dvec3(1.0, 0.0, 0.0));
+    auto v = camera.getViewMatrixDouble();
+    FluidParticleManager::getInstance().loadParticleData(
+        "D:/RenderData/", m, v, earthPos);
 
     float pointSize = step;
     float pointScale = 100/step;
@@ -267,7 +274,6 @@ float planeVert[] = {
     bool drawDepth = true;
 
     int frameIndex = 0;
-    const int frameMax = fluidParticles.getFrameNum();
 
     while (!glfwWindowShouldClose(window))
     {
@@ -288,7 +294,7 @@ float planeVert[] = {
 
         // --------- updateVertices --------
         {
-            if (frameIndex >= frameMax) frameIndex = 0;
+            if (frameIndex >= FluidParticleManager::getInstance().getFrameNum()) frameIndex = 0;
             printf("frame index %d\n", frameIndex);
         }
 
@@ -351,7 +357,6 @@ float planeVert[] = {
 #ifdef USE_LON_LAT
         Model = glm::dmat4(1.0);
         Model = glm::translate(Model, glm::dvec3(-2, -1, -1));
-        transferAndUpdateVertexLocation(fluidParticles.getVerticesVec(frameIndex), fluidParticles.VBO, 3, 0, Model);
         model = glm::mat4(1.0f);
 #endif
         // --------- draw particles ---------
@@ -366,7 +371,7 @@ float planeVert[] = {
             shaderParticles.setInt("u_nParticles", sizeXYZ * sizeXYZ * sizeXYZ);
             //shaderParticles.setFloat("time", glfwGetTime());
 
-            glBindVertexArray(fluidParticles.VAO);
+            FluidParticleManager::getInstance().activeFrame(frameIndex);
             glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
             glEnable(GL_DEPTH_TEST);
             glDrawArrays(GL_POINTS, 0, nParticles);
@@ -385,7 +390,7 @@ float planeVert[] = {
             depthShader.setFloat("pointScale", pointScale);
             depthShader.setFloat("pointSize", pointSize);
             depthShader.setFloat("densityLowerBound", densityLowerBound);
-            glBindVertexArray(fluidParticles.VAO);
+            FluidParticleManager::getInstance().activeFrame(frameIndex);
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
             glDrawArrays(GL_POINTS, 0, nParticles);
@@ -411,7 +416,7 @@ float planeVert[] = {
             glDisable(GL_DEPTH_TEST);
             glEnable(GL_PROGRAM_POINT_SIZE);
             glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-            glBindVertexArray(fluidParticles.VAO);
+            FluidParticleManager::getInstance().activeFrame(frameIndex);
             glDrawArrays(GL_POINTS, 0, nParticles);
 
             glDepthMask(GL_TRUE);

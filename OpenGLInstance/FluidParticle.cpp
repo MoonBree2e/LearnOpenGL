@@ -2,7 +2,7 @@
 
 namespace fs = std::filesystem;
 
-FluidParticle::FluidParticle(std::string vPath)
+FluidParticle::FluidParticle(std::filesystem::path path, glm::dmat4& model, glm::dmat4& view, glm::dvec3& T)
 {
 
     glGenBuffers(1, &VBO);
@@ -16,38 +16,22 @@ FluidParticle::FluidParticle(std::string vPath)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    loadParticleData(vPath);
+    setTranslate(T);
 }
 
-FluidParticle::~FluidParticle()
-{
+FluidParticle::~FluidParticle() {
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
 }
 
-void FluidParticle::bindFrameData(int index) {
-    glCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
-    glCall(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices[index].size(), vertices[index].data(), GL_DYNAMIC_DRAW));
-    glCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
-}
 
-void FluidParticle::loadParticleData(std::filesystem::path path) {
-    std::vector<std::string> plyFiles;
-    for (const auto& entry : fs::directory_iterator(path)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".ply") {
-            std::cout << "reading: " << entry.path() << std::endl;
-            plyFiles.push_back(entry.path().string());
-            loadVertices(entry.path());
-        }
-    }
-}
-
-void FluidParticle::loadVertices(std::filesystem::path file) {
+FluidParticle* FluidParticle::loadVertices(std::filesystem::path file) {
     std::ifstream inFile;
     inFile.open(file);
     if (!inFile.is_open()) {
         std::cout << "Could not open the file" << std::endl;
         exit(EXIT_FAILURE);
     }
-    int index = vertices_num.size();
     int vertexNum = 0;
     std::string temp;
     std::string endName = "end_header";
@@ -58,9 +42,6 @@ void FluidParticle::loadVertices(std::filesystem::path file) {
         }
         inFile >> temp;
     }
-
-    vertices_num.push_back(vertexNum);
-    vertices.push_back(std::vector<double>());
     
     glm::dvec3 origin;
 
@@ -76,10 +57,30 @@ void FluidParticle::loadVertices(std::filesystem::path file) {
         }
         auto pos = translate + (glm::dvec3(x, y, z) - origin) * scale;
 
-        vertices[index].push_back(pos.x);
-        vertices[index].push_back(pos.y);
-        vertices[index].push_back(pos.z);
+        vertices.push_back(pos.x);
+        vertices.push_back(pos.y);
+        vertices.push_back(pos.z);
     }
 
     inFile.close();
+    return this;
+}
+
+void FluidParticle::preMultiView(glm::dmat4& model, glm::dmat4& view) {
+    std::vector<float> Result(vertices.size());
+    int stride = 3;
+    int offset = 0;
+    for (size_t i = 0; i < vertices.size(); i += stride)
+    {
+        for (int k = 0; k < stride; ++k) { Result[i + k] = vertices[i + k]; }
+        glm::dvec4 Pos(vertices[i + offset], vertices[i + offset + 1], vertices[i + offset + 2], 1.0);
+        auto PosCS = view * model * Pos;
+        Result[i + offset] = PosCS.x / PosCS.w;
+        Result[i + offset + 1] = PosCS.y / PosCS.w;
+        Result[i + offset + 2] = PosCS.z / PosCS.w;
+    }
+
+    glCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+    glCall(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * Result.size(), Result.data(), GL_DYNAMIC_DRAW));
+    glCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
 }

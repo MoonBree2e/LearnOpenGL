@@ -162,6 +162,7 @@
     <ClCompile Include="..\Utils\stb_image.cpp" />
     <ClCompile Include="Coordination.cpp" />
     <ClCompile Include="FluidParticle.cpp" />
+    <ClCompile Include="FluidParticleManager.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +177,7 @@
     <ClInclude Include="..\imgui\imstb_truetype.h" />
     <ClInclude Include="Coordination.h" />
     <ClInclude Include="FluidParticle.h" />
+    <ClInclude Include="FluidParticleManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="depth.frag" />
