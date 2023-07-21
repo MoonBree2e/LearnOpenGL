@@ -51,6 +51,9 @@
     <ClCompile Include="..\Utils\glad.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="FluidParticle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -81,6 +84,9 @@
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="Coordination.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FluidParticle.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
