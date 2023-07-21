@@ -1,4 +1,5 @@
 #include "FluidParticle.h"
+#include <omp.h>
 
 namespace fs = std::filesystem;
 
@@ -70,7 +71,8 @@ void FluidParticle::preMultiView(glm::dmat4& model, glm::dmat4& view) {
     std::vector<float> Result(vertices.size());
     int stride = 3;
     int offset = 0;
-    for (size_t i = 0; i < vertices.size(); i += stride)
+    #pragma omp parallel for
+    for (int i = 0; i < vertices.size(); i += stride)
     {
         for (int k = 0; k < stride; ++k) { Result[i + k] = vertices[i + k]; }
         glm::dvec4 Pos(vertices[i + offset], vertices[i + offset + 1], vertices[i + offset + 2], 1.0);

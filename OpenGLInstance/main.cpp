@@ -358,6 +358,9 @@ float planeVert[] = {
         Model = glm::dmat4(1.0);
         Model = glm::translate(Model, glm::dvec3(-2, -1, -1));
         model = glm::mat4(1.0f);
+        auto pData = FluidParticleManager::getInstance().getFrameData(frameIndex);
+        v = camera.getViewMatrixDouble();
+        pData->preMultiView(Model, v);
 #endif
         // --------- draw particles ---------
         if (drawParticles) {

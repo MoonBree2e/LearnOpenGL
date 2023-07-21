@@ -27,15 +27,16 @@ public:
     void loadParticleData(std::filesystem::path path, glm::dmat4& model, glm::dmat4& view, glm::dvec3& T);
     void activeFrame(int index);
     int getFrameNum() { return frameNum; }
+    FluidParticle* getFrameData(int index) { return particleVec[index]; }
     ~FluidParticleManager() {
         for (auto it = particleMap.begin(); it != particleMap.end(); it++) {
-            delete it->second.get();
+            delete it->second;
         }
     }
 
 private:
     int frameNum = 0;
     bool loaded = false;
-    std::map<std::string, std::future<FluidParticle*>> particleMap;
-    std::vector<std::future<FluidParticle*>*> particleVec;
+    std::map<std::string, FluidParticle*> particleMap;
+    std::vector<FluidParticle*> particleVec;
 };
