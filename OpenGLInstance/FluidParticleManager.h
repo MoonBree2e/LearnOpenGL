@@ -29,14 +29,14 @@ public:
     int getFrameNum() { return frameNum; }
     FluidParticle* getFrameData(int index) { return particleVec[index]; }
     ~FluidParticleManager() {
-        for (auto it = particleMap.begin(); it != particleMap.end(); it++) {
-            delete it->second;
+        for (auto it = particleVec.begin(); it != particleVec.end(); it++) {
+            delete *it;
         }
     }
 
 private:
     int frameNum = 0;
     bool loaded = false;
-    std::map<std::string, FluidParticle*> particleMap;
+    std::map<std::string, std::future<FluidParticle*>> particleMap;
     std::vector<FluidParticle*> particleVec;
 };
