@@ -19,8 +19,8 @@
 #include "Light.h"
 #include "ScopedFramebufferOverride.h"
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1280;
+const unsigned int SCR_HEIGHT = 720;
 #define CLEAR_DEPTH_VALUE -1000000.0f
 
 void processInput(GLFWwindow* window);
@@ -114,7 +114,7 @@ float cameraSpeedScale = 0.5f;
 const std::string ROOT_DIR = "D:/Repo/GrainViewer/share/scenes/";
 
 GLsizei frameCount;
-GLsizei pointCount;
+GLuint pointCount;
 std::unique_ptr<GlBuffer> pointBuffer; 
 GLuint pointVAO;
 
@@ -221,7 +221,7 @@ int main()
     pGrCamera->setNearDistance(0.1);
     pGrCamera->setFarDistance(100);
     pGrCamera->m_center = glm::vec3(-0.0618722, -0.0389748, 0.0787444);
-    pGrCamera->m_quat = glm::quat(0.437443, 0.448886, 0.558042, -0.543829);
+    pGrCamera->m_quat = glm::quat(-0.543829, 0.437443, 0.448886, 0.558042);
     pGrCamera->m_zoom = 0.590913;
     pGrCamera->m_sensitivity = 0.003;
     pGrCamera->m_zoomSensitivity = 0.01;
@@ -480,7 +480,7 @@ int main()
                     constexpr int STEP_OFFSET = static_cast<int>(StepShaderVariant::STEP_OFFSET);
 
                     for (int i = static_cast<int>(firstStep); i <= static_cast<int>(lastStep); ++i) {
-                        Shader& shader = splitter[i-1];
+                        Shader& shader = splitter[i - 1];
                         shader.use();
 
                         // set uniform
@@ -535,12 +535,12 @@ int main()
                         shader.setUniform("uTime", 0);
                         shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
                         shader.setUniform("uGrainRadius", 0.0005f);
-                        shader.setUniform("uEpsilon", properties.epsilonFactor* grainRadius);
+                        shader.setUniform("uEpsilon", properties.epsilonFactor * grainRadius);
                         shader.setUniform("uBboxMin", properties.bboxMin);
                         shader.setUniform("uBboxMax", properties.bboxMax);
                         shader.setUniform("uuseBbox", properties.useBbox);
                         shader.setUniform("uShellDepthFalloff", (GLuint)1);
-                        shader.setUniform("uWeightMode", 0);    
+                        shader.setUniform("uWeightMode", 0);
 
                         glBindTextureUnit(0, colormap);
                         shader.setUniform("uColormapTexture", 0);
@@ -560,6 +560,82 @@ int main()
                 }
                 glPopDebugGroup();
             }
+        }
+
+        {
+            glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "renderCamera");
+            GrCamera& camera = *pGrCamera;
+            const glm::vec2& res = camera.resolution();
+            const glm::vec4& rect = camera.properties().viewRect;
+            GLint vX0 = static_cast<GLint>(rect.x * SCR_WIDTH);
+            GLint vY0 = static_cast<GLint>(rect.y * SCR_HEIGHT);
+            GLsizei vWidth = static_cast<GLsizei>(res.x);
+            GLsizei vHeight = static_cast<GLsizei>(res.y);
+	        GLint vX = 0, vY = 0;
+
+            auto DeferredFBO = camera.getExtraFramebuffer("Deferred FBO", GrCamera::ExtraFramebufferOption::GBufferDepth);
+            DeferredFBO->bind();
+            glViewport(vX, vY, vWidth, vHeight);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            // Pre-rendering -- occlusion
+            {
+                std::shared_ptr<Framebuffer> occlusionCullingFbo;
+
+                glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "occlusion");
+                GrCamera& prerenderCamera = camera;
+                {
+                    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "PointCloudSplitter PreRender");
+                    ScopedFramebufferOverride scoppedFramebufferOverride;
+                    glEnable(GL_PROGRAM_POINT_SIZE);
+
+                    occlusionCullingFbo = camera.getExtraFramebuffer("occlusionCullingFbo", GrCamera::ExtraFramebufferOption::Rgba32fDepth);
+                    occlusionCullingFbo->bind();
+                    glClearColor(0, 0, 0, 1);
+                    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+
+                    // --------- z-prepass (optional) ---------
+                    {
+                        glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "z-prepass (optional)");
+                        occlusionCullingFbo->deactivateColorAttachments();
+                        Shader& shader = m_occlusionCullingShader;
+                        // set uniform
+                        {
+                            glm::mat4 viewModelMatrix = prerenderCamera.viewMatrix() * modelMatrix();
+                            shader.bindUniformBlock("Camera", prerenderCamera.ubo());
+                            shader.setUniform("modelMatrix", modelMatrix());
+                            shader.setUniform("viewModelMatrix", viewModelMatrix);
+                            shader.setUniform("uGrainRadius", 0.0005f);
+                            shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
+                            shader.setUniform("uOuterOverInnerRadius", 1.f / 0.95f);
+
+                            shader.setUniform("uPointCount", pointCount);
+                            shader.setUniform("uFrameCount", 1);
+                            shader.setUniform("uTime", 0);
+                        }
+                        shader.use();
+                        pointBuffer->bind();
+                        pointBuffer->bindSsbo(1);
+                        glDrawArrays(GL_POINTS, 0, pointCount);
+                        glBindVertexArray(0);
+
+                        glTextureBarrier();
+                        occlusionCullingFbo->activateColorAttachments();
+
+                        glPopDebugGroup();
+                    }
+
+
+                    glPopDebugGroup();
+
+                }
+                glPopDebugGroup();
+            }
+
+
+
+            glPopDebugGroup();
         }
 
 

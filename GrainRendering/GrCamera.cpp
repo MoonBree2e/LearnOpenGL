@@ -25,7 +25,7 @@ GrCamera::GrCamera()
 	, m_extraFramebuffers(static_cast<int>(ExtraFramebufferOption::_Count))
 {
 	initUbo();
-	setResolution(800, 600);
+	setResolution(1280, 720);
 }
 
 GrCamera::~GrCamera() {
