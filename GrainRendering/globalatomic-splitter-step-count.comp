@@ -1,0 +1,254 @@
+// _AUGEN_BEGIN_INCLUDE D:\Repo\GrainViewer\share\shaders\grain\globalatomic-splitter.comp.glsl
+#version 450 core
+// _AUGEN_BEGIN_INCLUDE sys:defines
+#define RENDER_TYPE_CACHE
+#define STEP_COUNT
+// _AUGEN_END_INCLUDE sys:defines
+// _AUGEN_BEGIN_INCLUDE sys:settings
+#define LOCAL_SIZE_X 128
+// _AUGEN_END_INCLUDE sys:settings
+
+layout (local_size_x = LOCAL_SIZE_X, local_size_y = 1, local_size_z = 1) in;
+
+struct PointCloundVboEntry {
+	vec4 position;
+};
+
+struct Counter {
+	uint count;
+	uint offset;
+};
+
+uniform uint uPointCount; // number of elements to draw a priori, ie points per frame // location = 12
+uniform uint uRenderModelCount = 2;
+uniform uint uFrameCount;
+uniform float uFps = 25.0;
+uniform float uTime;
+
+layout(std430, binding = 0) restrict buffer countersSsbo {
+	Counter counters[];
+};
+layout (std430, binding = 2) restrict writeonly buffer elementBufferSsbo {
+	uint elementBuffer[];
+};
+
+
+// better: pointCount is the point count per frame, not the total size of the buffer
+uint AnimatedPointId2(uint pointId, uint frameCount, uint pointCount, float time, float fps) {
+	uint frame = uint(time * fps) % max(1, frameCount);
+	return pointId + pointCount * frame;
+}
+
+
+/**
+ * getRenderType(): Get the index of the model to use for a given element.
+ * Several options to investigate:
+ *   a. cache this before hand in a renderType[] ssbo
+        -- RENDER_TYPE_PRECOMPUTE variant
+ *   b. compute it directly here, but then compute it twice (steps #1 and #3)
+        -- RENDER_TYPE_FORGET variant
+ *   c. A trade-off would consist in computing it during step #1 and caching
+ *      it for step #3 -- RENDER_TYPE_CACHED variant
+ * The best choice depends on whether the limiting factor is memory bandwidth
+ * or scalar units.
+ */
+
+
+uniform sampler2D uOcclusionMap;
+uniform float uGrainRadius;
+uniform float uGrainInnerRadiusRatio;
+uniform float uOuterOverInnerRadius; // 1./uGrainInnerRadiusRatio
+
+uniform mat4 modelMatrix;
+uniform mat4 viewModelMatrix; // location = 15
+// _AUGEN_BEGIN_INCLUDE D:\Repo\GrainViewer\share\shaders\grain\../include/uniform/camera.inc.glsl
+
+layout (std140) uniform Camera {
+    mat4 viewMatrix;
+    mat4 projectionMatrix;
+    mat4 inverseViewMatrix;
+    vec2 resolution;
+    float uNear;
+    float uFar;
+    float uLeft;
+    float uRight;
+    float uTop;
+    float uBottom;
+};
+// _AUGEN_END_INCLUDE
+
+// _AUGEN_BEGIN_INCLUDE D:\Repo\GrainViewer\share\shaders\grain\discriminate.inc.glsl
+// require camera.inc.glsl
+
+// _AUGEN_BEGIN_INCLUDE D:\Repo\GrainViewer\share\shaders\grain\../include/frustum.inc.glsl
+/**
+ * Parameter 'planes' contains coefficients (a, b, c, d) such that (x,y,z) is a point of the plane iff ax+by+cz+d=0
+ * There are six frustum planes, in this order: left, right, top, bottom, near, far
+ * See http://www8.cs.umu.se/kurser/5DV051/HT12/lab/plane_extraction.pdf for explaination
+ */
+void ExtractFrustumPlanes(const mat4 projectionMatrix, out vec4 planes[6]) {
+	mat4 m = transpose(projectionMatrix);
+	planes[0] = m[3] + m[0];
+	planes[1] = m[3] - m[0]; 
+	planes[2] = m[3] + m[1];
+	planes[3] = m[3] - m[1];
+	planes[4] = m[3] + m[2];
+	planes[5] = m[3] - m[2];
+}
+
+/**
+ * Frustum culling of a sphere at position p of radius r
+ */
+bool SphereFrustumCulling(const mat4 projectionMatrix, vec3 p, float radius) {
+	vec4 planes[6];
+	ExtractFrustumPlanes(projectionMatrix, planes);
+	for (int i = 0; i < 5; i++) {
+		float dist = dot(vec4(p, 1.0), planes[i]);
+		if (dist < -radius) return true; // sphere culled
+	}
+	return false;
+}
+// _AUGEN_END_INCLUDE
+
+// Must match PointCloudSplitter::RenderModel
+const uint cRenderModelInstance = 0;
+const uint cRenderModelImpostor = 1;
+const uint cRenderModelPoint = 2;
+const uint cRenderModelNone = 3;
+
+uniform bool uEnableOcclusionCulling = true;
+uniform bool uEnableFrustumCulling = true;
+
+uniform float uInstanceLimit = 1.05; // distance beyond which we switch from instances to impostors
+uniform float uImpostorLimit = 10.0; // distance beyond which we switch from impostors to points
+
+uniform bool uUseBbox = false;
+uniform vec3 uBboxMin;
+uniform vec3 uBboxMax;
+
+bool isInOcclusionCone(vec3 position_cs, vec3 otherGrain_cs, float innerRadius, float outerOverInnerRadius)
+{
+	vec3 closestCone_cs = otherGrain_cs * outerOverInnerRadius;
+	float cosAlpha = dot(normalize(closestCone_cs), normalize(position_cs.xyz - closestCone_cs));
+	if (cosAlpha >= 0 && closestCone_cs != vec3(0.0)) {
+		float sinBeta = innerRadius / length(otherGrain_cs);
+		float sin2Alpha = 1. - cosAlpha * cosAlpha;
+		float sin2Beta = sinBeta * sinBeta;
+		if (sin2Alpha < sin2Beta) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Choses the most appropriate model to render the point at model position
+ * 'position', which may be no model at all if culling tests don't pass.
+ * return one of cRenderModel* constants
+ */
+uint discriminate(
+	vec3 position,
+	float outerRadius,
+	float innerRadius,
+	float outerOverInnerRadius,
+	sampler2D occlusionMap)
+{
+	vec4 position_cs = viewModelMatrix * vec4(position, 1.0);
+
+	float instanceLimit2 = uInstanceLimit * uInstanceLimit;
+	float impostorLimit2 = uImpostorLimit * uImpostorLimit;
+
+	/////////////////////////////////////////
+	// Distance-based discrimination
+	uint model = cRenderModelNone;
+	float l2 = dot(position_cs, position_cs);
+	if (l2 < impostorLimit2) {
+		model = l2 < instanceLimit2 ? cRenderModelInstance : cRenderModelImpostor;
+	} else {
+		model = cRenderModelPoint;
+	}
+
+	/////////////////////////////////////////
+	// Frustum culling
+	// unexplained multiplication factor...
+	float fac = 4.0;
+	if (uEnableFrustumCulling && SphereFrustumCulling(projectionMatrix, position_cs.xyz, fac*outerRadius)) {
+		return cRenderModelNone;
+	}
+
+	/////////////////////////////////////////
+	// Extra bounding-box culling
+	if (uUseBbox) {
+		if (
+			position.x < uBboxMin.x || position.x > uBboxMax.x ||
+			position.y < uBboxMin.y || position.y > uBboxMax.y ||
+			position.z < uBboxMin.z || position.z > uBboxMax.z
+		) {
+			return cRenderModelNone;
+		}
+	}
+
+	/////////////////////////////////////////
+	// Occlusion culling
+	if (uEnableOcclusionCulling) {
+		vec4 position_ps = projectionMatrix * vec4(position_cs.xyz, 1.0);
+		vec2 fragCoord = resolution.xy * (position_ps.xy / position_ps.w * 0.5 + 0.5);
+
+		fragCoord = clamp(fragCoord, vec2(0.5), resolution.xy - vec2(0.5));
+		vec3 otherGrain_cs = texelFetch(occlusionMap, ivec2(fragCoord.xy), 0).xyz;
+		if (isInOcclusionCone(position_cs.xyz, otherGrain_cs, innerRadius, outerOverInnerRadius)) {
+			return cRenderModelNone;
+		}
+
+/*
+		fragCoord += vec2(1, 0);
+		fragCoord = clamp(fragCoord, vec2(0.5), resolution.xy - vec2(0.5));
+		otherGrain_cs = texelFetch(occlusionMap, ivec2(fragCoord.xy), 0).xyz;
+		if (isInOcclusionCone(position_cs.xyz, otherGrain_cs, innerRadius, outerOverInnerRadius)) {
+			return cRenderModelNone;
+		}
+
+		fragCoord += vec2(-1, 1);
+		fragCoord = clamp(fragCoord, vec2(0.5), resolution.xy - vec2(0.5));
+		otherGrain_cs = texelFetch(occlusionMap, ivec2(fragCoord.xy), 0).xyz;
+		if (isInOcclusionCone(position_cs.xyz, otherGrain_cs, innerRadius, outerOverInnerRadius)) {
+			return cRenderModelNone;
+		}
+*/
+	}
+
+	return model;
+}
+
+
+// _AUGEN_END_INCLUDE
+
+layout(std430, binding = 1) restrict writeonly buffer renderTypeSsbo {
+	uint renderType[];
+};
+
+layout(std430, binding = 3) restrict readonly buffer pointSsbo {
+	PointCloundVboEntry point[];
+};
+
+uint getRenderType(uint element) {
+	uint pointId = AnimatedPointId2(element, uFrameCount, uPointCount, uTime, uFps);
+	vec3 position = point[pointId].position.xyz;
+	float innerRadius = uGrainRadius * uGrainInnerRadiusRatio;
+	uint type = discriminate(position, uGrainRadius, innerRadius, uOuterOverInnerRadius, uOcclusionMap);
+	renderType[element] = type;
+	return type;
+}
+
+
+void main() {
+	uint i = gl_GlobalInvocationID.x;
+	if (i >= uPointCount) return;
+	uint type, beforeIncrement;
+
+// Count elements of each render type
+	type = getRenderType(i);
+	atomicAdd(counters[type].count, 1);
+
+}
+// _AUGEN_END_INCLUDE

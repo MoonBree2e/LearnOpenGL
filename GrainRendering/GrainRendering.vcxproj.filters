@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="imgui">
+      <UniqueIdentifier>{09f629bb-8483-4b40-9eca-237cd7cb97e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{ed2e4d56-ce63-4045-9a44-d94a83540f02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{478863b4-3b27-4f90-a768-10cb74338dec}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Utils\glad.c">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Utils\stb_image.cpp">
+      <Filter>资源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_demo.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_draw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_impl_glfw.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_impl_opengl3.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_tables.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_widgets.cpp">
+      <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="main_grain_rendering.cpp" />
+    <ClCompile Include="PointCloud.cpp" />
+    <ClCompile Include="fileutils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="strutils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="GlBuffer.cpp" />
+    <ClCompile Include="GrFrameBuffer.cpp" />
+    <ClCompile Include="GrCamera.cpp" />
+    <ClCompile Include="ShadowMap.cpp" />
+    <ClCompile Include="Light.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\imgui\imconfig.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_impl_glfw.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_impl_opengl3.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_impl_opengl3_loader.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_internal.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imstb_rectpack.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imstb_textedit.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imstb_truetype.h">
+      <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloud.h" />
+    <ClInclude Include="fileutils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="strutils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="GlBuffer.h" />
+    <ClInclude Include="GrFrameBuffer.h" />
+    <ClInclude Include="GrCamera.h" />
+    <ClInclude Include="Light.h" />
+    <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="ScopedFramebufferOverride.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="particle.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="particle.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="occlusion-culling.vert" />
+    <None Include="occlusion-culling.frag" />
+    <None Include="globalatomic-splitter-step-reset.comp" />
+    <None Include="globalatomic-splitter-step-count.comp" />
+    <None Include="globalatomic-splitter-step-offset.comp" />
+    <None Include="globalatomic-splitter-step-write.comp" />
+    <None Include="impostor-grain.vert" />
+    <None Include="impostor-grain.frag" />
+    <None Include="impostor-grain.geo" />
+    <None Include="far-grain.vert" />
+    <None Include="far-grain.frag" />
+    <None Include="far-grain.geo" />
+  </ItemGroup>
+</Project>

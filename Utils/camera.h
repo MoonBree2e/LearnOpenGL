@@ -19,7 +19,7 @@ const double YAW = -90.f;
 const double PITCH = 0.f;
 const double CAMERASPEED = 5.5f;
 const double SENSITIVITY = 0.1f;
-const double FOV = 45.f;
+const double FOV = 24.f;
 
 class Camera {
 public:
@@ -37,9 +37,9 @@ public:
     double Fov;
 
     double ZNear = 0.1f;
-    double ZFar = 50.0f;
+    double ZFar = 1000.0f;
     Camera(glm::dvec3 pos = glm::dvec3(0.f, 0.f, 0.f), glm::dvec3 up = glm::dvec3(0.f, 1.f, 0.f), double yaw = YAW, double pitch = PITCH) :
-        Front(glm::dvec3(0.f, 0.f, -1.f)), Position(pos), WorldUp(up),
+        Front(glm::dvec3(0.f, 0.f, 1.f)), Position(pos), WorldUp(up),
         Yaw(yaw), Pitch(pitch), MovementSpeed(CAMERASPEED), MouseSensitivity(SENSITIVITY), Fov(FOV)
     {
         __updateCameraVectors();

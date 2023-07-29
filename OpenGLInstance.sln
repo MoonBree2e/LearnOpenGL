@@ -79,6 +79,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshShaderTriangle", "MeshS
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MeshShaderTorus", "MeshShaderTorus\MeshShaderTorus.vcxproj", "{162340DA-49B7-4D62-AC37-FC54B55C28CF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrainRendering", "GrainRendering\GrainRendering.vcxproj", "{47133DC2-6E0F-41FF-9681-2D58A2110DCD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -391,6 +393,14 @@ Global
 		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Release|x64.Build.0 = Release|x64
 		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Release|x86.ActiveCfg = Release|Win32
 		{162340DA-49B7-4D62-AC37-FC54B55C28CF}.Release|x86.Build.0 = Release|Win32
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Debug|x64.ActiveCfg = Debug|x64
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Debug|x64.Build.0 = Debug|x64
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Debug|x86.ActiveCfg = Debug|Win32
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Debug|x86.Build.0 = Debug|Win32
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Release|x64.ActiveCfg = Release|x64
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Release|x64.Build.0 = Release|x64
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Release|x86.ActiveCfg = Release|Win32
+		{47133DC2-6E0F-41FF-9681-2D58A2110DCD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
