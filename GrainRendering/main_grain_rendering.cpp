@@ -18,6 +18,7 @@
 #include "GlBuffer.h"
 #include "Light.h"
 #include "ScopedFramebufferOverride.h"
+#include "DebugGroup.h"
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -669,6 +670,58 @@ int main()
                         glDepthFunc(GL_LESS);
 
                         glPopDebugGroup();
+                    }
+                    // --------- Splitting ---------
+                    {
+                        DebugGroupOverrride debugGroup("Splitting");
+                        m_elementCount = pointCount;
+                        if (!m_renderTypeCache) {
+                            m_renderTypeCache = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
+                            m_renderTypeCache->addBlock<GLuint>(pointCount);
+                            m_renderTypeCache->alloc();
+                            m_renderTypeCache->finalize();
+                            glObjectLabel(GL_BUFFER, m_renderTypeCache->name(), -1, "renderTypeCache");
+                        }
+                        m_countersSsbo->bindSsbo(0);
+                        m_renderTypeCache->bindSsbo(1);
+                        m_elementBuffer->bindSsbo(2);
+                        pointBuffer->bind();
+                        pointBuffer->bindSsbo(3);
+
+                        StepShaderVariant firstStep = StepShaderVariant::STEP_RESET;
+                        constexpr StepShaderVariant lastStep = StepShaderVariant::STEP_WRITE;
+                        constexpr int STEP_RESET = static_cast<int>(StepShaderVariant::STEP_RESET);
+                        constexpr int STEP_OFFSET = static_cast<int>(StepShaderVariant::STEP_OFFSET);
+
+                        for (int i = static_cast<int>(firstStep); i <= static_cast<int>(lastStep); ++i) {
+                            Shader& shader = splitter[i - 1];
+                            shader.use();
+
+                            // set uniform
+                            {
+                                glm::mat4 viewModelMatrix = prerenderCamera.viewMatrix() * modelMatrix();
+                                shader.bindUniformBlock("Camera", prerenderCamera.ubo());
+                                shader.setUniform("modelMatrix", modelMatrix());
+                                shader.setUniform("viewModelMatrix", viewModelMatrix);
+                                shader.setUniform("uGrainRadius", 0.0005f);
+                                shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
+                                shader.setUniform("uOuterOverInnerRadius", 1.f / 0.95f);
+
+                                shader.setUniform("uFrameCount", 1);
+                                shader.setUniform("uTime", 0);
+                                shader.setUniform("uPointCount", m_elementCount);
+                                shader.setUniform("uRenderModelCount", uRenderModelCount);
+                            }
+
+                            glBindTextureUnit(0, occlusionCullingFbo->colorTexture(0));
+                            shader.setUniform("uOcclusionMap", 0);
+
+                            glDispatchCompute(i == STEP_RESET || i == STEP_OFFSET ? 1 : static_cast<GLuint>(m_xWorkGroups), 1, 1);
+                            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+                        }
+
+                        // Get counters back
+                        m_countersSsbo->exportBlock(0, m_counters);
                     }
 
 
