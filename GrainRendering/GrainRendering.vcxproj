@@ -143,12 +143,14 @@
     <ClCompile Include="..\Utils\stb_image.cpp" />
     <ClCompile Include="fileutils.cpp" />
     <ClCompile Include="GlBuffer.cpp" />
+    <ClCompile Include="GlTexture.cpp" />
     <ClCompile Include="GrCamera.cpp" />
     <ClCompile Include="GrFrameBuffer.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main_grain_rendering.cpp" />
     <ClCompile Include="PointCloud.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="strutils.cpp" />
   </ItemGroup>
@@ -165,16 +167,21 @@
     <ClInclude Include="DebugGroup.h" />
     <ClInclude Include="fileutils.h" />
     <ClInclude Include="GlBuffer.h" />
+    <ClInclude Include="GlTexture.h" />
     <ClInclude Include="GrCamera.h" />
     <ClInclude Include="GrFrameBuffer.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="PointCloud.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="ScopedFramebufferOverride.h" />
     <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="stb_image_write.h" />
     <ClInclude Include="strutils.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="basic-world.frag" />
+    <None Include="basic-world.vert" />
     <None Include="far-grain.frag" />
     <None Include="far-grain.geo" />
     <None Include="far-grain.vert" />
@@ -182,6 +189,9 @@
     <None Include="globalatomic-splitter-step-offset.comp" />
     <None Include="globalatomic-splitter-step-reset.comp" />
     <None Include="globalatomic-splitter-step-write.comp" />
+    <None Include="impostor-grain-rendering.frag" />
+    <None Include="impostor-grain-rendering.geo" />
+    <None Include="impostor-grain-rendering.vert" />
     <None Include="impostor-grain.frag" />
     <None Include="impostor-grain.geo" />
     <None Include="impostor-grain.vert" />

@@ -19,6 +19,7 @@
 #include "Light.h"
 #include "ScopedFramebufferOverride.h"
 #include "DebugGroup.h"
+#include "GlTexture.h"
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -119,6 +120,9 @@ GLuint pointCount;
 std::unique_ptr<GlBuffer> pointBuffer; 
 GLuint pointVAO;
 
+GLuint worldVAO;
+GLuint worldVBO;
+
 std::vector<std::shared_ptr<Light>> m_lights;
 
 enum class RenderModel {
@@ -177,6 +181,82 @@ struct PropertiesFarGrain {
     bool checkboardSprites = false;
     bool showSampleCount = false;
 };
+
+void initWorldVAO() {
+    static bool worldVAOInited = false;
+    if (worldVAOInited) return;
+
+    GLfloat attributes[] = {
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f,  1.0f,
+    1.0f,  1.0f,  1.0f,
+    1.0f,  1.0f,  1.0f,
+    1.0f,  1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+
+    -1.0f, -1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    1.0f,  1.0f,  1.0f,
+    1.0f,  1.0f,  1.0f,
+    1.0f, -1.0f,  1.0f,
+    -1.0f, -1.0f,  1.0f,
+
+    -1.0f,  1.0f, -1.0f,
+    1.0f,  1.0f, -1.0f,
+    1.0f,  1.0f,  1.0f,
+    1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f, -1.0f,
+
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+    1.0f, -1.0f, -1.0f,
+    1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+    1.0f, -1.0f,  1.0f
+    };
+    glCreateVertexArrays(1, &worldVAO);
+    glBindVertexArray(worldVAO);
+    glCreateBuffers(1, &worldVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, worldVBO);
+    glNamedBufferData(worldVBO, sizeof(attributes), attributes, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+    glEnableVertexArrayAttrib(worldVAO, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+}
+
+// imposterAtlas
+std::unique_ptr<GlTexture> normalAlphaTexture;
+std::unique_ptr<GlTexture> baseColorTexture;
+std::unique_ptr<GlTexture> metallicRoughnessTexture;
+glm::vec3 baseColor;
+float metallic = 0.0;
+float roughness = 0.5;
+GLuint viewCount;
+
+void loadAtlas() {
+    baseColorTexture = ResourceManager::loadTextureStack("D:/Repo/GrainViewer/share/scenes/Impostors/scene/baseColor");
+    normalAlphaTexture = ResourceManager::loadTextureStack("D:/Repo/GrainViewer/share/scenes/Impostors/scene/normal");
+    metallicRoughnessTexture = ResourceManager::loadTextureStack("D:/Repo/GrainViewer/share/scenes/Impostors/scene/metallicRoughness");
+    GLuint n = normalAlphaTexture->depth();
+    viewCount = static_cast<GLuint>(sqrt(n / 2));
+}
 
 int main()
 {
@@ -249,6 +329,8 @@ int main()
         glCall(glBindTexture(GL_TEXTURE_2D, 0));
         stbi_image_free(data1);
     }
+    
+    loadAtlas();
 
 
 
@@ -308,7 +390,9 @@ int main()
         "globalatomic-splitter-step-write.comp"};
     Shader imposter_grain("impostor-grain.vert", "impostor-grain.frag", "impostor-grain.geo");
     Shader far_grain("far-grain.vert", "far-grain.frag", "far-grain.geo");
-
+    Shader worldShader("basic-world.vert", "basic-world.frag");
+    Shader imposter_grain_rendering("impostor-grain-rendering.vert", "impostor-grain-rendering.frag", "impostor-grain-rendering.geo");
+    
     glObjectLabel(GL_PROGRAM, m_occlusionCullingShader.ID, -1, "occlusionCulling");
     glObjectLabel(GL_PROGRAM, splitter[0].ID, -1, "splitter compute reset");
     glObjectLabel(GL_PROGRAM, splitter[1].ID, -1, "splitter compute count");
@@ -316,7 +400,8 @@ int main()
     glObjectLabel(GL_PROGRAM, splitter[3].ID, -1, "splitter compute write");
 
     glObjectLabel(GL_PROGRAM, far_grain.ID, -1, "far-grain shadowmap");
-
+    glObjectLabel(GL_PROGRAM, worldShader.ID, -1, "basic-world program");
+    glObjectLabel(GL_PROGRAM, imposter_grain_rendering.ID, -1, "impostor-grain-rendering program");
 
     
     //Shader shaderParticles("particle.vert", "particle.frag");
@@ -545,17 +630,15 @@ int main()
 
                         glBindTextureUnit(0, colormap);
                         shader.setUniform("uColormapTexture", 0);
-
-                        shader.use();
-                        glBindVertexArray(pointVAO);
-                        m_elementBuffer->bindSsbo(1);
-                        pointBuffer->bindSsbo(0);
-                        int offset = m_counters[static_cast<int>(RenderModel::Point)].offset;
-                        int count = m_counters[static_cast<int>(RenderModel::Point)].count;
-                        glDrawArrays(GL_POINTS, offset, count);
-                        glBindVertexArray(0);
-
                     }
+                    shader.use();
+                    glBindVertexArray(pointVAO);
+                    m_elementBuffer->bindSsbo(1);
+                    pointBuffer->bindSsbo(0);
+                    int offset = m_counters[static_cast<int>(RenderModel::Point)].offset;
+                    int count = m_counters[static_cast<int>(RenderModel::Point)].count;
+                    glDrawArrays(GL_POINTS, offset, count);
+                    glBindVertexArray(0);
 
                     glPopDebugGroup();
                 }
@@ -729,6 +812,105 @@ int main()
 
                 }
                 glPopDebugGroup();
+            }
+
+            // main rendering
+            {
+                DebugGroupOverrride debugGroup("main renderring");
+                // --------- world --------
+                {
+                    DebugGroupOverrride debugGroup("basic-world");
+
+                    glDepthMask(GL_FALSE);
+                    glDepthFunc(GL_LEQUAL);
+                    worldShader.use();
+                    worldShader.bindUniformBlock("Camera", camera.ubo());
+
+                    initWorldVAO();
+                    glBindVertexArray(worldVAO);
+                    glDrawArrays(GL_TRIANGLES, 0, 6 * 6);
+                    glBindVertexArray(0);
+                    glDepthMask(GL_TRUE);
+                    glDepthFunc(GL_LESS);
+                }
+                // --------- imposter-grain rendering --------
+                {
+                    DebugGroupOverrride debugGroup("imposter-grain");
+                    ScopedFramebufferOverride scoppedFramebufferOverride; // to automatically restore fbo binding at the end of scope
+
+                    Shader& shader = imposter_grain_rendering;
+                    shader.use();
+                    // setUniforms
+                    {
+                        glm::mat4 viewModelMatrix = camera.viewMatrix() * modelMatrix();
+                        shader.bindUniformBlock("Camera", camera.ubo());
+                        shader.setUniform("modelMatrix", modelMatrix());
+                        shader.setUniform("viewModelMatrix", viewModelMatrix);
+                        shader.setUniform("uGrainRadius", 0.0005f);
+                        
+
+                        shader.setUniform("uFrameCount", 1);
+                        shader.setUniform("uTime", 0);
+
+                        GLint o = 0;
+                        glBindTextureUnit(o, colormap);
+                        shader.setUniform("uColormapTexture", o++);
+
+                        std::string prefix = "uImpostor[0].";
+                        shader.setUniform(prefix + "viewCount", viewCount);
+                        shader.setUniform(prefix + "baseColor", baseColor);
+                        shader.setUniform(prefix + "metallic", metallic);
+                        shader.setUniform(prefix + "roughness", roughness);
+
+                        normalAlphaTexture->bind(o);
+                        shader.setUniform(prefix + "normalAlphaTexture", o++);
+
+                        if (baseColorTexture) {
+                            baseColorTexture->bind(o);
+                            shader.setUniform(prefix + "baseColorTexture", o++);
+                        }
+                        shader.setUniform(prefix + "hasBaseColorMap", static_cast<bool>(baseColorTexture));
+
+                        if (metallicRoughnessTexture) {
+                            metallicRoughnessTexture->bind(o);
+                            shader.setUniform(prefix + "metallicRoughnessTexture", o++);
+                        }
+                        shader.setUniform(prefix + "hasMetallicRoughnessMap", static_cast<bool>(metallicRoughnessTexture));
+
+                        auto occlusionCullingFbo = camera.getExtraFramebuffer("occlusionCullingFbo", GrCamera::ExtraFramebufferOption::Rgba32fDepth);
+                        glBindTextureUnit(static_cast<GLuint>(o), occlusionCullingFbo->colorTexture(0));
+                        shader.setUniform("uOcclusionMap", o++);
+                        shader.setUniform("uUseOcclusionMap", true);
+                    }
+                    // draw
+                    {
+                        shader.setUniform("uPrerenderSurfaceStep", 0);
+
+                        shader.use();
+                        glBindVertexArray(pointVAO);
+                        pointBuffer->bindSsbo(0);
+                        m_elementBuffer->bindSsbo(1);
+                        shader.setUniform("uUsePointElements", true);
+                        int offset = m_counters[1].offset; // 1 for imposter
+                        int count = m_counters[1].count;
+                        glDrawArrays(GL_POINTS, offset, count);
+                        glBindVertexArray(0);
+                    }
+                    // draw PrerenderSurfaceStep
+                    {
+                        shader.setUniform("uPrerenderSurfaceStep", 1);
+
+                        shader.use();
+                        glBindVertexArray(pointVAO);
+                        pointBuffer->bindSsbo(0);
+                        m_elementBuffer->bindSsbo(1);
+                        shader.setUniform("uUsePointElements", true);
+                        int offset = m_counters[1].offset; // 1 for imposter
+                        int count = m_counters[1].count;
+                        glDrawArrays(GL_POINTS, offset, count);
+                        glBindVertexArray(0);
+                    }
+                }
             }
 
 

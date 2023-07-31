@@ -59,6 +59,8 @@
     <ClCompile Include="GrCamera.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="Light.cpp" />
+    <ClCompile Include="GlTexture.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -109,6 +111,9 @@
     <ClInclude Include="DebugGroup.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="GlTexture.h" />
+    <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="particle.vert">
@@ -117,17 +122,56 @@
     <None Include="particle.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="occlusion-culling.vert" />
-    <None Include="occlusion-culling.frag" />
-    <None Include="globalatomic-splitter-step-reset.comp" />
-    <None Include="globalatomic-splitter-step-count.comp" />
-    <None Include="globalatomic-splitter-step-offset.comp" />
-    <None Include="globalatomic-splitter-step-write.comp" />
-    <None Include="impostor-grain.vert" />
-    <None Include="impostor-grain.frag" />
-    <None Include="impostor-grain.geo" />
-    <None Include="far-grain.vert" />
-    <None Include="far-grain.frag" />
-    <None Include="far-grain.geo" />
+    <None Include="impostor-grain-rendering.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="impostor-grain.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="impostor-grain.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="impostor-grain.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="basic-world.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="basic-world.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="globalatomic-splitter-step-count.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="globalatomic-splitter-step-offset.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="globalatomic-splitter-step-reset.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="globalatomic-splitter-step-write.comp">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="occlusion-culling.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="occlusion-culling.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="impostor-grain-rendering.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="impostor-grain-rendering.geo">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
