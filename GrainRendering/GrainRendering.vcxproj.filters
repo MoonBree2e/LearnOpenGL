@@ -61,6 +61,7 @@
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="GlTexture.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="PostEffect.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h">
@@ -114,6 +115,7 @@
     <ClInclude Include="GlTexture.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="stb_image_write.h" />
+    <ClInclude Include="PostEffect.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="particle.vert">
@@ -171,6 +173,29 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="impostor-grain-rendering.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-depth.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-depth.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-point.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-point.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-depth.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-point.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-blit.vert" />
+    <None Include="far-grain-render-blit.frag" />
+    <None Include="far-grain-render-blit.geo">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

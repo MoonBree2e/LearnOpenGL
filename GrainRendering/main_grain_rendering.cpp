@@ -20,6 +20,7 @@
 #include "ScopedFramebufferOverride.h"
 #include "DebugGroup.h"
 #include "GlTexture.h"
+#include "PostEffect.h"
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -38,6 +39,8 @@ bool m_imguiFocus = false;
 if(pGrCamera->properties().controlInViewport) {\
     pGrCamera->method();\
 }
+
+#define MAKE_STR(contents) static_cast<std::ostringstream&&>(std::ostringstream() << contents).str()
 
 void key_callback(GLFWwindow * window, int key, int scancode, int action, int mode) {
     
@@ -392,7 +395,12 @@ int main()
     Shader far_grain("far-grain.vert", "far-grain.frag", "far-grain.geo");
     Shader worldShader("basic-world.vert", "basic-world.frag");
     Shader imposter_grain_rendering("impostor-grain-rendering.vert", "impostor-grain-rendering.frag", "impostor-grain-rendering.geo");
-    
+    Shader far_rain_render_depth("far-grain-render-depth.vert", "far-grain-render-depth.frag", "far-grain-render-depth.geo");
+    Shader far_rain_render_point("far-grain-render-point.vert", "far-grain-render-point.frag", "far-grain-render-point.geo");
+    Shader far_rain_render_blit("far-grain-render-blit.vert", "far-grain-render-blit.frag", "far-grain-render-blit.geo");
+
+
+
     glObjectLabel(GL_PROGRAM, m_occlusionCullingShader.ID, -1, "occlusionCulling");
     glObjectLabel(GL_PROGRAM, splitter[0].ID, -1, "splitter compute reset");
     glObjectLabel(GL_PROGRAM, splitter[1].ID, -1, "splitter compute count");
@@ -402,7 +410,9 @@ int main()
     glObjectLabel(GL_PROGRAM, far_grain.ID, -1, "far-grain shadowmap");
     glObjectLabel(GL_PROGRAM, worldShader.ID, -1, "basic-world program");
     glObjectLabel(GL_PROGRAM, imposter_grain_rendering.ID, -1, "impostor-grain-rendering program");
-
+    glObjectLabel(GL_PROGRAM, far_rain_render_depth.ID, -1, "far-grain render depth");
+    glObjectLabel(GL_PROGRAM, far_rain_render_point.ID, -1, "far-grain render point");
+    glObjectLabel(GL_PROGRAM, far_rain_render_blit.ID, -1, "far-grain render blit");
     
     //Shader shaderParticles("particle.vert", "particle.frag");
     //Shader depthShader("depth.vert", "depth.frag");
@@ -545,7 +555,7 @@ int main()
 
                 // --------- splitting --------
                 {
-                    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Splitting");
+                    DebugGroupOverrride debugGroup("Splitting");
                     m_elementCount = pointCount;
                     if (!m_renderTypeCache) {
                         m_renderTypeCache = std::make_unique<GlBuffer>(GL_ELEMENT_ARRAY_BUFFER);
@@ -576,6 +586,8 @@ int main()
                             shader.setUniform("modelMatrix", modelMatrix());
                             shader.setUniform("viewModelMatrix", viewModelMatrix);
                             shader.setUniform("uGrainRadius", 0.0005f);
+                            shader.setUniform("uImpostorLimit", 1.11f);
+                            shader.setUniform("uInstanceLimit", 0.f);
                             shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
                             shader.setUniform("uOuterOverInnerRadius", 1.f / 0.95f);
 
@@ -594,15 +606,16 @@ int main()
 
                     // Get counters back
                     m_countersSsbo->exportBlock(0, m_counters);
-                    glPopDebugGroup();
                 }
                 glPopDebugGroup();
 
                 // --------- main shadow map rendering --------
                 glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "main shadow map rendering");
                 glEnable(GL_PROGRAM_POINT_SIZE);
+
+                // fra-grain
                 {
-                    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "far-grain");
+                    DebugGroupOverrride debugGroup("far-grain");
 
                     glEnable(GL_PROGRAM_POINT_SIZE);
                     glDepthMask(GL_TRUE);
@@ -639,15 +652,13 @@ int main()
                     int count = m_counters[static_cast<int>(RenderModel::Point)].count;
                     glDrawArrays(GL_POINTS, offset, count);
                     glBindVertexArray(0);
-
-                    glPopDebugGroup();
                 }
                 glPopDebugGroup();
             }
         }
 
         {
-            glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "renderCamera");
+            DebugGroupOverrride debugGroup("renderCamera");
             GrCamera& camera = *pGrCamera;
             const glm::vec2& res = camera.resolution();
             const glm::vec4& rect = camera.properties().viewRect;
@@ -787,6 +798,8 @@ int main()
                                 shader.setUniform("modelMatrix", modelMatrix());
                                 shader.setUniform("viewModelMatrix", viewModelMatrix);
                                 shader.setUniform("uGrainRadius", 0.0005f);
+                                shader.setUniform("uImpostorLimit", 1.11f);
+                                shader.setUniform("uInstanceLimit", 0.f);
                                 shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
                                 shader.setUniform("uOuterOverInnerRadius", 1.f / 0.95f);
 
@@ -911,11 +924,206 @@ int main()
                         glBindVertexArray(0);
                     }
                 }
+                // --------- far-grain rendering --------
+                {
+                    ScopedFramebufferOverride scoppedFramebufferOverride;
+                    DebugGroupOverrride debugGroup("far-grain-rendering");
+                    glEnable(GL_PROGRAM_POINT_SIZE);
+
+                    std::shared_ptr<Framebuffer> fbo = camera.getExtraFramebuffer("FarGrainRenderer::renderToGBuffer", GrCamera::ExtraFramebufferOption::LinearGBufferDepth);
+                    // 0. clear depth
+                    {
+                        fbo->deactivateColorAttachments();
+                        fbo->bind();
+                        glClear(GL_DEPTH_BUFFER_BIT);
+                    }
+
+                    // 1. Render depth buffer with an offset of epsilon
+                    {
+                        Shader& shader = far_rain_render_depth;
+                        glDepthMask(GL_TRUE);
+                        glEnable(GL_DEPTH_TEST);
+                        glDisable(GL_BLEND);
+
+                        glm::mat4 viewModelMatrix = camera.viewMatrix() * modelMatrix();
+                        PropertiesFarGrain properties;
+                        properties.epsilonFactor = 0.445;
+                        float grainRadius = 0.0005;
+                        // set uniforms
+                        {
+                            shader.bindUniformBlock("Camera", camera.ubo());
+                            shader.setUniform("modelMatrix", modelMatrix());
+                            shader.setUniform("viewModelMatrix", viewModelMatrix);
+                            shader.setUniform("uFrameCount", 1);
+                            shader.setUniform("uTime", 0);
+                            shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
+                            shader.setUniform("uGrainRadius", 0.0005f);
+                            shader.setUniform("uEpsilon", properties.epsilonFactor * grainRadius);
+                            shader.setUniform("uBboxMin", properties.bboxMin);
+                            shader.setUniform("uBboxMax", properties.bboxMax);
+                            shader.setUniform("uuseBbox", properties.useBbox);
+                            shader.setUniform("uShellDepthFalloff", (GLuint)1);
+                            shader.setUniform("uWeightMode", 0);
+
+                            glBindTextureUnit(0, colormap);
+                            shader.setUniform("uColormapTexture", 0);
+                        }
+                        shader.use();
+                        glBindVertexArray(pointVAO);
+                        m_elementBuffer->bindSsbo(1);
+                        pointBuffer->bindSsbo(0);
+                        int offset = m_counters[static_cast<int>(RenderModel::Point)].offset;
+                        int count = m_counters[static_cast<int>(RenderModel::Point)].count;
+                        glDrawArrays(GL_POINTS, offset, count);
+                        glBindVertexArray(0);
+                    }
+
+                    // 2. Clear color buffers
+                    {
+                        fbo->activateColorAttachments();
+                        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+                        glClear(GL_COLOR_BUFFER_BIT);
+                    }
+
+                    // 3. Render points cumulatively
+                    {
+                        Shader& shader = far_rain_render_point;
+                        glDepthMask(GL_FALSE);
+                        glEnable(GL_DEPTH_TEST);
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_ONE, GL_ONE);
+
+                        glm::mat4 viewModelMatrix = camera.viewMatrix() * modelMatrix();
+                        PropertiesFarGrain properties;
+                        properties.epsilonFactor = 0.445;
+                        float grainRadius = 0.0005;
+                        // set uniforms
+                        {
+                            shader.bindUniformBlock("Camera", camera.ubo());
+                            shader.setUniform("modelMatrix", modelMatrix());
+                            shader.setUniform("viewModelMatrix", viewModelMatrix);
+                            shader.setUniform("uFrameCount", 1);
+                            shader.setUniform("uTime", 0);
+                            shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
+                            shader.setUniform("uGrainRadius", 0.0005f);
+                            shader.setUniform("uEpsilon", properties.epsilonFactor * grainRadius);
+                            shader.setUniform("uBboxMin", properties.bboxMin);
+                            shader.setUniform("uBboxMax", properties.bboxMax);
+                            shader.setUniform("uuseBbox", properties.useBbox);
+                            shader.setUniform("uShellDepthFalloff", (GLuint)1);
+                            shader.setUniform("uWeightMode", 0);
+
+                            GLint o = 0;
+                            glBindTextureUnit(o, colormap);
+                            shader.setUniform("uColormapTexture", o++);
+
+                            // bind atlases
+                            std::string prefix = "uImpostor[0].";
+                            shader.setUniform(prefix + "viewCount", viewCount);
+                            shader.setUniform(prefix + "baseColor", baseColor);
+                            shader.setUniform(prefix + "metallic", metallic);
+                            shader.setUniform(prefix + "roughness", roughness);
+
+                            normalAlphaTexture->bind(o);
+                            shader.setUniform(prefix + "normalAlphaTexture", o++);
+
+                            if (baseColorTexture) {
+                                baseColorTexture->bind(o);
+                                shader.setUniform(prefix + "baseColorTexture", o++);
+                            }
+                            shader.setUniform(prefix + "hasBaseColorMap", static_cast<bool>(baseColorTexture));
+
+                            if (metallicRoughnessTexture) {
+                                metallicRoughnessTexture->bind(o);
+                                shader.setUniform(prefix + "metallicRoughnessTexture", o++);
+                            }
+                            shader.setUniform(prefix + "hasMetallicRoughnessMap", static_cast<bool>(metallicRoughnessTexture));
+
+                            auto occlusionCullingFbo = camera.getExtraFramebuffer("occlusionCullingFbo", GrCamera::ExtraFramebufferOption::Rgba32fDepth);
+                            glBindTextureUnit(static_cast<GLuint>(o), occlusionCullingFbo->colorTexture(0));
+                            shader.setUniform("uOcclusionMap", o++);
+                            shader.setUniform("uUseOcclusionMap", true);
+
+                            // bindDepthTexture
+                            glTextureBarrier();
+                            GLuint textureUnit = 7;
+                            GLint depthTexture;
+                            GLint drawFboId = 0;
+                            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFboId);
+                            glGetNamedFramebufferAttachmentParameteriv(drawFboId, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &depthTexture);
+                            glBindTextureUnit(textureUnit, static_cast<GLuint>(depthTexture));
+                            shader.setUniform("uDepthTexture", static_cast<GLint>(textureUnit));
+                        }
+                        shader.use();
+                        glBindVertexArray(pointVAO);
+                        m_elementBuffer->bindSsbo(1);
+                        pointBuffer->bindSsbo(0);
+                        int offset = m_counters[static_cast<int>(RenderModel::Point)].offset;
+                        int count = m_counters[static_cast<int>(RenderModel::Point)].count;
+                        glDrawArrays(GL_POINTS, offset, count);
+                        glBindVertexArray(0);
+                    }
+                    
+                    // 4. Blit extra fbo to gbuffer
+                    {
+                        Shader& shader = far_rain_render_blit;
+                        scoppedFramebufferOverride.restore();
+                        glDepthMask(GL_TRUE);
+                        glEnable(GL_DEPTH_TEST);
+                        glDisable(GL_BLEND);
+
+                        // set uniforms
+                        {
+                            glm::mat4 viewModelMatrix = camera.viewMatrix() * modelMatrix();
+                            PropertiesFarGrain properties;
+                            properties.epsilonFactor = 0.445;
+                            float grainRadius = 0.0005;
+
+                            shader.bindUniformBlock("Camera", camera.ubo());
+                            shader.setUniform("modelMatrix", modelMatrix());
+                            shader.setUniform("viewModelMatrix", viewModelMatrix);
+                            shader.setUniform("uFrameCount", 1);
+                            shader.setUniform("uTime", 0);
+                            shader.setUniform("uGrainInnerRadiusRatio", 0.95f);
+                            shader.setUniform("uGrainRadius", 0.0005f);
+                            shader.setUniform("uEpsilon", properties.epsilonFactor * grainRadius);
+                            shader.setUniform("uBboxMin", properties.bboxMin);
+                            shader.setUniform("uBboxMax", properties.bboxMax);
+                            shader.setUniform("uuseBbox", properties.useBbox);
+                            shader.setUniform("uShellDepthFalloff", (GLuint)1);
+                            shader.setUniform("uWeightMode", 0);
+
+                            glBindTextureUnit(0, colormap);
+                            shader.setUniform("uColormapTexture", 0);
+                        }
+                        // Bind secondary FBO textures
+                        {
+                            glTextureBarrier();
+                            GLint o = 0;
+                            for (int i = 0; i < fbo->colorTextureCount(); ++i) {
+                                glBindTextureUnit(static_cast<GLuint>(o), fbo->colorTexture(i));
+                                shader.setUniform(MAKE_STR("lgbuffer" << i), o);
+                                ++o;
+                            }
+                            glBindTextureUnit(static_cast<GLuint>(o), fbo->depthTexture());
+                            shader.setUniform("uFboDepthTexture", o++);
+
+                            glTextureBarrier();
+                            GLuint textureUnit = o++;
+                            GLint depthTexture;
+                            GLint drawFboId = 0;
+                            glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFboId);
+                            glGetNamedFramebufferAttachmentParameteriv(drawFboId, GL_DEPTH_ATTACHMENT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &depthTexture);
+                            glBindTextureUnit(textureUnit, static_cast<GLuint>(depthTexture));
+                            shader.setUniform("uDepthTexture", static_cast<GLint>(textureUnit));
+
+                            shader.use();
+                            PostEffect::DrawWithDepthTest();
+                        }
+
+                    }
+                }
             }
-
-
-
-            glPopDebugGroup();
         }
 
 
