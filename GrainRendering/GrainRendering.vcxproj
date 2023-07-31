@@ -184,6 +184,9 @@
   <ItemGroup>
     <None Include="basic-world.frag" />
     <None Include="basic-world.vert" />
+    <None Include="deferred-shader.frag" />
+    <None Include="deferred-shader.geo" />
+    <None Include="deferred-shader.vert" />
     <None Include="far-grain-render-blit.frag" />
     <None Include="far-grain-render-blit.geo" />
     <None Include="far-grain-render-blit.vert" />

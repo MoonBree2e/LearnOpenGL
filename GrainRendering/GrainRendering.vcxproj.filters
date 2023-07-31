@@ -198,5 +198,8 @@
     <None Include="far-grain-render-blit.geo">
       <Filter>shaders</Filter>
     </None>
+    <None Include="deferred-shader.vert" />
+    <None Include="deferred-shader.frag" />
+    <None Include="deferred-shader.geo" />
   </ItemGroup>
 </Project>

@@ -156,6 +156,7 @@ int m_xWorkGroups;
 GLuint m_elementCount;
 GLuint uRenderModelCount = 4;
 unsigned int colormap;
+unsigned int defferedShadingColormap;
 
 glm::mat4 modelMatrix() {
     glm::mat4 model = glm::mat4(
@@ -261,6 +262,10 @@ void loadAtlas() {
     viewCount = static_cast<GLuint>(sqrt(n / 2));
 }
 
+GLuint defferedVAO;
+
+
+
 int main()
 {
 #pragma region BEGIN
@@ -321,6 +326,20 @@ int main()
 
         glCall(glGenTextures(1, &colormap));
         glCall(glBindTexture(GL_TEXTURE_2D, colormap));
+        glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+        glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+        glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT));
+        glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+        glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+
+        glCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width1, height1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data1));
+        glCall(glGenerateMipmap(GL_TEXTURE_2D));
+        glCall(glBindTexture(GL_TEXTURE_2D, 0));
+        stbi_image_free(data1);
+
+        data1 = stbi_load((ROOT_DIR + "Textures/turbo.png").c_str(), &width1, &height1, &nrChannels1, 4);
+        glCall(glGenTextures(1, &defferedShadingColormap));
+        glCall(glBindTexture(GL_TEXTURE_2D, defferedShadingColormap));
         glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
         glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
         glCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT));
@@ -398,8 +417,8 @@ int main()
     Shader far_rain_render_depth("far-grain-render-depth.vert", "far-grain-render-depth.frag", "far-grain-render-depth.geo");
     Shader far_rain_render_point("far-grain-render-point.vert", "far-grain-render-point.frag", "far-grain-render-point.geo");
     Shader far_rain_render_blit("far-grain-render-blit.vert", "far-grain-render-blit.frag", "far-grain-render-blit.geo");
-
-
+    Shader deffered_shader("deferred-shader.vert", "deferred-shader.frag", "deferred-shader.geo");
+    glCreateVertexArrays(1, &defferedVAO);
 
     glObjectLabel(GL_PROGRAM, m_occlusionCullingShader.ID, -1, "occlusionCulling");
     glObjectLabel(GL_PROGRAM, splitter[0].ID, -1, "splitter compute reset");
@@ -413,6 +432,8 @@ int main()
     glObjectLabel(GL_PROGRAM, far_rain_render_depth.ID, -1, "far-grain render depth");
     glObjectLabel(GL_PROGRAM, far_rain_render_point.ID, -1, "far-grain render point");
     glObjectLabel(GL_PROGRAM, far_rain_render_blit.ID, -1, "far-grain render blit");
+    glObjectLabel(GL_PROGRAM, deffered_shader.ID, -1, "deffered_shader");
+
     
     //Shader shaderParticles("particle.vert", "particle.frag");
     //Shader depthShader("depth.vert", "depth.frag");
@@ -1063,7 +1084,7 @@ int main()
                         glDrawArrays(GL_POINTS, offset, count);
                         glBindVertexArray(0);
                     }
-                    
+
                     // 4. Blit extra fbo to gbuffer
                     {
                         Shader& shader = far_rain_render_blit;
@@ -1122,6 +1143,71 @@ int main()
                         }
 
                     }
+                }
+                // --------- deffered shading --------
+                {
+                    DebugGroupOverrride debugGroup("Deffered shading");
+                    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                    vX = vX0;  vY = vY0;
+                    glm::vec2 blitOffset = glm::vec2(vX, vY);
+
+                    auto fbo = camera.getExtraFramebuffer("Deferred FBO", GrCamera::ExtraFramebufferOption::GBufferDepth);
+                    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+                    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                    glDepthMask(GL_TRUE);
+                    glDisable(GL_DEPTH_TEST);
+                    glDisable(GL_BLEND);
+
+                    Shader& shader = deffered_shader;
+
+                    {
+                        shader.bindUniformBlock("Camera", camera.ubo());
+                        shader.setUniform("uBlitOffset", blitOffset);
+
+                        GLint o = 0;
+                        for (int i = 0; i < fbo->colorTextureCount(); ++i) {
+                            shader.setUniform(MAKE_STR("gbuffer" << i), o);
+                            glBindTextureUnit(static_cast<GLuint>(o), fbo->colorTexture(i));
+                            ++o;
+                        }
+
+                        shader.setUniform("in_depth", o);
+                        glBindTextureUnit(static_cast<GLuint>(o), fbo->depthTexture());
+                        ++o;
+
+                        auto lights = m_lights;
+                        for (size_t k = 0; k < lights.size(); ++k) {
+                            std::string prefix = MAKE_STR("light[" << k << "].");
+                            shader.setUniform(prefix + "position_ws", lights[k]->position());
+                            shader.setUniform(prefix + "color", lights[k]->color());
+                            shader.setUniform(prefix + "matrix", lights[k]->shadowMap().camera().projectionMatrix() * lights[k]->shadowMap().camera().viewMatrix());
+                            shader.setUniform(prefix + "isRich", lights[k]->isRich() ? 1 : 0);
+                            shader.setUniform(prefix + "hasShadowMap", lights[k]->hasShadowMap() ? 1 : 0);
+                            shader.setUniform(prefix + "shadowMap", o);
+                            glBindTextureUnit(static_cast<GLuint>(o), lights[k]->shadowMap().depthTexture());
+                            ++o;
+                            if (lights[k]->isRich()) {
+                                shader.setUniform(prefix + "richShadowMap", o);
+                                glBindTextureUnit(static_cast<GLuint>(o), lights[k]->shadowMap().colorTexture(0));
+                                ++o;
+                            }
+                        }
+
+                        shader.setUniform("uIsShadowMapEnabled", true);
+
+                        shader.setUniform("uShadowMapBias", 0.00116f);
+                        shader.setUniform("uMaxSampleCount", 10.f);
+
+                        shader.setUniform("uHasColormap", static_cast<bool>(defferedShadingColormap));
+                        if (colormap) {
+                            shader.setUniform("uColormap", static_cast<GLint>(o));
+                            glBindTextureUnit(o++, defferedShadingColormap);
+                        }
+                    }
+                    shader.use();
+                    glBindVertexArray(defferedVAO);
+                    glDrawArrays(GL_POINTS, 0, 1);
+                    glBindVertexArray(0);
                 }
             }
         }
