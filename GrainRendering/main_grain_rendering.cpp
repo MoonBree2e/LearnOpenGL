@@ -416,6 +416,7 @@ int main()
     Shader far_grain("far-grain.vert", "far-grain.frag", "far-grain.geo");
     Shader worldShader("basic-world.vert", "basic-world.frag");
     Shader imposter_grain_rendering("impostor-grain-rendering.vert", "impostor-grain-rendering.frag", "impostor-grain-rendering.geo");
+    Shader imposter_grain_shadowmap("impostor-grain-shadowmap.vert", "impostor-grain-shadowmap.frag", "impostor-grain-shadowmap.geo");
     Shader far_rain_render_depth("far-grain-render-depth.vert", "far-grain-render-depth.frag", "far-grain-render-depth.geo");
     Shader far_rain_render_point("far-grain-render-point.vert", "far-grain-render-point.frag", "far-grain-render-point.geo");
     Shader far_rain_render_blit("far-grain-render-blit.vert", "far-grain-render-blit.frag", "far-grain-render-blit.geo");
@@ -461,7 +462,6 @@ int main()
         m_countersSsbo->importBlock(m_counters);
         glObjectLabel(GL_BUFFER, m_countersSsbo->name(), -1, "countersSsbo");
 
-
         m_xWorkGroups = (pointCount + (m_local_size_x - 1)) / m_local_size_x;
     }
 
@@ -499,6 +499,8 @@ int main()
 
                 // --------- each light pre rendering ---------
                 {
+                    DebugGroupOverrride debugGroup("pre rendering");
+
                     std::shared_ptr<Framebuffer> occlusionCullingFbo;
 
                     // 1. Occlusion culling map (kind of shadow map)
@@ -653,9 +655,89 @@ int main()
                     DebugGroupOverrride debugGroup("main shadow map rendering");
 
                     glEnable(GL_PROGRAM_POINT_SIZE);
-                    // imposter
+                    // impostor
                     {
+                        DebugGroupOverrride debugGroup("impostor");
+                        ScopedFramebufferOverride scoppedFramebufferOverride; // to automatically restore fbo binding at the end of scope
 
+                        Shader& shader = imposter_grain_shadowmap;
+                        shader.use();
+                        // setUniforms
+                        {
+                            glm::mat4 viewModelMatrix = lightCamera.viewMatrix() * modelMatrix();
+                            shader.bindUniformBlock("Camera", lightCamera.ubo());
+                            shader.setUniform("modelMatrix", modelMatrix());
+                            shader.setUniform("viewModelMatrix", viewModelMatrix);
+                            shader.setUniform("uGrainRadius", 0.0005f);
+
+                            shader.setUniform("uFrameCount", 1);
+                            shader.setUniform("uTime", 0);
+
+                            shader.setUniform("uPointCount", (GLuint)m_counters[1].count);
+
+                            shader.setUniform("uHitSphereCorrectionFactor", 0.9f);
+                            shader.setUniform("uSamplingMode", 2);
+                            shader.setUniform("uPrerenderSurface", 1);
+
+
+                            GLint o = 0;
+                            glBindTextureUnit(o, colormap);
+                            shader.setUniform("uColormapTexture", o++);
+
+                            std::string prefix = "uImpostor[0].";
+                            shader.setUniform(prefix + "viewCount", viewCount);
+                            shader.setUniform(prefix + "baseColor", baseColor);
+                            shader.setUniform(prefix + "metallic", metallic);
+                            shader.setUniform(prefix + "roughness", roughness);
+
+                            normalAlphaTexture->bind(o);
+                            shader.setUniform(prefix + "normalAlphaTexture", o++);
+
+                            if (baseColorTexture) {
+                                baseColorTexture->bind(o);
+                                shader.setUniform(prefix + "baseColorTexture", o++);
+                            }
+                            shader.setUniform(prefix + "hasBaseColorMap", static_cast<bool>(baseColorTexture));
+
+                            if (metallicRoughnessTexture) {
+                                metallicRoughnessTexture->bind(o);
+                                shader.setUniform(prefix + "metallicRoughnessTexture", o++);
+                            }
+                            shader.setUniform(prefix + "hasMetallicRoughnessMap", static_cast<bool>(metallicRoughnessTexture));
+
+                            auto occlusionCullingFbo = lightCamera.getExtraFramebuffer("occlusionCullingFbo", GrCamera::ExtraFramebufferOption::Rgba32fDepth);
+                            glBindTextureUnit(static_cast<GLuint>(o), occlusionCullingFbo->colorTexture(0));
+                            shader.setUniform("uOcclusionMap", o++);
+                            shader.setUniform("uUseOcclusionMap", true);
+                        }
+                        // draw
+                        {
+                            shader.setUniform("uPrerenderSurfaceStep", 0);
+
+                            shader.use();
+                            glBindVertexArray(pointVAO);
+                            pointBuffer->bindSsbo(0);
+                            m_elementBuffer->bindSsbo(1);
+                            shader.setUniform("uUsePointElements", true);
+                            int offset = m_counters[1].offset; // 1 for imposter
+                            int count = m_counters[1].count;
+                            glDrawArrays(GL_POINTS, offset, count);
+                            glBindVertexArray(0);
+                        }
+                        // draw PrerenderSurfaceStep
+                        {
+                            shader.setUniform("uPrerenderSurfaceStep", 1);
+
+                            shader.use();
+                            glBindVertexArray(pointVAO);
+                            pointBuffer->bindSsbo(0);
+                            m_elementBuffer->bindSsbo(1);
+                            shader.setUniform("uUsePointElements", true);
+                            int offset = m_counters[1].offset; // 1 for imposter
+                            int count = m_counters[1].count;
+                            glDrawArrays(GL_POINTS, offset, count);
+                            glBindVertexArray(0);
+                        }
                     }
                     // far-grain
                     {

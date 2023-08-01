@@ -206,6 +206,9 @@
     <None Include="impostor-grain-rendering.frag" />
     <None Include="impostor-grain-rendering.geo" />
     <None Include="impostor-grain-rendering.vert" />
+    <None Include="impostor-grain-shadowmap.frag" />
+    <None Include="impostor-grain-shadowmap.geo" />
+    <None Include="impostor-grain-shadowmap.vert" />
     <None Include="impostor-grain.frag" />
     <None Include="impostor-grain.geo" />
     <None Include="impostor-grain.vert" />

@@ -193,13 +193,32 @@
     <None Include="far-grain-render-point.frag">
       <Filter>shaders</Filter>
     </None>
-    <None Include="far-grain-render-blit.vert" />
-    <None Include="far-grain-render-blit.frag" />
     <None Include="far-grain-render-blit.geo">
       <Filter>shaders</Filter>
     </None>
-    <None Include="deferred-shader.vert" />
-    <None Include="deferred-shader.frag" />
-    <None Include="deferred-shader.geo" />
+    <None Include="impostor-grain-shadowmap.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="impostor-grain-shadowmap.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="impostor-grain-shadowmap.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="deferred-shader.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="deferred-shader.geo">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="deferred-shader.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-blit.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="far-grain-render-blit.vert">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
