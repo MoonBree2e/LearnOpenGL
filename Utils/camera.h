@@ -15,11 +15,11 @@ enum CameraMoveDirection {
     RIGHT
 };
 
-const double YAW = -90.f;
-const double PITCH = 0.f;
-const double CAMERASPEED = 5.5f;
-const double SENSITIVITY = 0.1f;
-const double FOV = 24.f;
+const float YAW = -90.f;
+const float PITCH = 0.f;
+const float CAMERASPEED = 5.5f;
+const float SENSITIVITY = 0.1f;
+const float FOV = 24.f;
 
 class Camera {
 public:
@@ -29,15 +29,15 @@ public:
     glm::dvec3 Right;
     glm::dvec3 WorldUp;
 
-    double Yaw;
-    double Pitch;
+    float Yaw;
+    float Pitch;
 
-    double MovementSpeed;
-    double MouseSensitivity;
-    double Fov;
+    float MovementSpeed;
+    float MouseSensitivity;
+    float Fov;
 
-    double ZNear = 0.1f;
-    double ZFar = 1000.0f;
+    float ZNear = 0.1f;
+    float ZFar = 1000.0f;
     Camera(glm::dvec3 pos = glm::dvec3(0.f, 0.f, 0.f), glm::dvec3 up = glm::dvec3(0.f, 1.f, 0.f), double yaw = YAW, double pitch = PITCH) :
         Front(glm::dvec3(0.f, 0.f, 1.f)), Position(pos), WorldUp(up),
         Yaw(yaw), Pitch(pitch), MovementSpeed(CAMERASPEED), MouseSensitivity(SENSITIVITY), Fov(FOV)
@@ -61,7 +61,7 @@ public:
     }
 
     glm::mat4 getProjectionMatrix(uint32_t vWidth, uint32_t vHeight) const {
-        return glm::perspective(glm::radians(Fov), static_cast<double>(vWidth) / vHeight, ZNear, ZFar);
+        return glm::perspective(glm::radians(Fov), static_cast<float>(vWidth) / vHeight, ZNear, ZFar);
     }
 
     glm::mat4 getProjectViewMatrix(uint32_t vWidth, uint32_t vHeight) const {

@@ -49,5 +49,14 @@
     <None Include="lamp.vert">
       <Filter>头文件</Filter>
     </None>
+    <None Include="billboardRenderer.vert">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="billboardRenderer.frag">
+      <Filter>头文件</Filter>
+    </None>
+    <None Include="billboardRenderer.geom">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
