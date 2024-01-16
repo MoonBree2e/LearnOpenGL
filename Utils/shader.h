@@ -1,4 +1,5 @@
 #pragma once
+#pragma warning(disable:4996)
 #ifndef SHADER_H
 #define SHADER_H
 #include <filesystem>
